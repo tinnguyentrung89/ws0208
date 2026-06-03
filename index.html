@@ -1,92 +1,1322 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Giới thiệu về An ninh mạng</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background-color: #0f0f0f;
-      color: #e0e0e0;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>IT English Master — Flashcards + IPA</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  body.flashcard-mode { overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 
-    header {
-      background-color: #121212;
-      padding: 30px 20px;
-      text-align: center;
-      border-bottom: 2px solid #00ffcc;
-    }
+  /* MODE SWITCHER */
+  .mode-switcher {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 12px;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(10px);
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-color: transparent;
+    color: white;
+  }
+  .mode-btn:active { transform: scale(0.97); }
 
-    header h1 {
-      margin: 0;
-      font-size: 2.5em;
-      color: #00ffcc;
-    }
+  /* ===== FLASHCARD MODE ===== */
+  header {
+    padding: 10px 20px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .title { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+  .subtitle { font-size: 10px; color: #94a3b8; margin-top: 2px; }
 
-    header p {
-      font-size: 1.1em;
-      color: #bbbbbb;
-    }
+  .controls {
+    display: flex;
+    gap: 6px;
+    padding: 8px 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .controls::-webkit-scrollbar { display: none; }
+  .chip {
+    padding: 5px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #cbd5e1;
+    border-radius: 18px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip.active { background: #3b82f6; border-color: #3b82f6; color: white; }
 
-    .container {
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 20px;
-      background-color: #1a1a1a;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0, 255, 204, 0.1);
-    }
+  .progress {
+    padding: 0 20px 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    margin: 0 12px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.3s;
+  }
 
-    h2 {
-      color: #00ffcc;
-      border-bottom: 1px solid #00ffcc;
-      padding-bottom: 5px;
-    }
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-size: 10px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+  .stat-known { color: #4ade80; }
+  .stat-unknown { color: #f87171; }
 
-    ul {
-      padding-left: 20px;
-    }
+  .card-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    perspective: 1500px;
+    overflow: hidden;
+  }
 
-    button {
-      background-color: #00ffcc;
-      color: #000;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 15px;
-    }
+  .card {
+    width: 100%;
+    max-width: 440px;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .card.swipe-left { transform: translateX(-120%) rotate(-15deg); opacity: 0; transition: all 0.3s; }
+  .card.swipe-right { transform: translateX(120%) rotate(15deg); opacity: 0; transition: all 0.3s; }
 
-    button:hover {
-      background-color: #00ccaa;
-    }
+  .face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 22px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .face::-webkit-scrollbar { width: 4px; }
+  .face::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
 
-    .hidden-section {
-      display: none;
-      margin-top: 20px;
-      animation: fadeIn 0.5s ease-in;
-    }
+  .face-front {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    align-items: center;
+    justify-content: space-between;
+  }
+  .face-back {
+    background: linear-gradient(135deg, #064e3b 0%, #134e4a 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    transform: rotateY(180deg);
+  }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .category-tag {
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .srs-level {
+    padding: 3px 8px;
+    background: rgba(251,191,36,0.2);
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fde68a;
+  }
+  .card-num { font-size: 10px; color: rgba(255,255,255,0.6); font-weight: 600; }
 
-    .code {
-      background-color: #000;
-      color: #00ff00;
-      font-family: monospace;
-      padding: 10px;
-      margin-top: 15px;
-      border-radius: 5px;
-    }
-  </style>
+  .emoji-display {
+    font-size: 80px;
+    line-height: 1;
+    margin: 8px 0;
+    text-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    animation: bounce 0.6s ease-out;
+  }
+  @keyframes bounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .term { font-size: 24px; font-weight: 800; color: white; line-height: 1.2; margin-bottom: 6px; text-align: center; word-break: break-word; }
+  .ipa { font-size: 14px; color: #fde68a; font-family: "Times New Roman", serif; margin-bottom: 10px; text-align: center; }
+
+  .speak-btn {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .speak-btn:active { transform: scale(0.97); background: rgba(255,255,255,0.2); }
+
+  .tap-hint { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 6px; text-align: center; }
+  .swipe-hint { font-size: 10px; color: rgba(255,255,255,0.4); text-align: center; margin-top: 4px; }
+
+  .back-emoji { font-size: 32px; text-align: center; margin-bottom: 4px; line-height: 1; }
+  .meaning-vn { font-size: 18px; font-weight: 700; color: white; margin-bottom: 10px; text-align: center; line-height: 1.3; }
+  .section-label {
+    font-size: 9px; color: rgba(255,255,255,0.6); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 4px; margin-top: 8px; font-weight: 700;
+  }
+  .memory-tip {
+    font-size: 11px; color: #fde68a;
+    background: rgba(251,191,36,0.1);
+    padding: 8px 10px; border-radius: 8px;
+    border-left: 3px solid #fbbf24; line-height: 1.4;
+  }
+  .dialog-box { background: rgba(0,0,0,0.25); border-radius: 10px; padding: 8px; }
+  .example-box { font-size: 13px; color:#bbf7d0; background: rgba(16,185,129,0.10); border-left:3px solid #10b981; padding:8px 10px; border-radius:8px; line-height:1.4; }
+  #prodToggle.prod-on { background: linear-gradient(135deg,#7c3aed,#4f46e5); color:#fff; border-color:transparent; }
+  .dialog-line { display: flex; gap: 6px; margin-bottom: 5px; font-size: 11px; line-height: 1.4; }
+  .dialog-line:last-child { margin-bottom: 0; }
+  .speaker { font-weight: 700; color: #93c5fd; flex-shrink: 0; min-width: 30px; }
+  .speaker.you { color: #4ade80; }
+  .dialog-text { color: #e2e8f0; }
+  .dialog-text .highlight {
+    background: rgba(251,191,36,0.25);
+    color: #fde68a; padding: 1px 3px;
+    border-radius: 3px; font-weight: 600;
+  }
+  .practice-box {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 10px; padding: 8px;
+  }
+  .practice-step { display: flex; gap: 6px; margin-bottom: 4px; font-size: 10px; line-height: 1.3; }
+  .step-num {
+    background: #10b981; color: white;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; flex-shrink: 0;
+  }
+  .step-text { color: #d1fae5; }
+  .step-text strong { color: #fde68a; }
+  .practice-buttons { display: flex; gap: 6px; margin-top: 6px; }
+  .practice-btn {
+    flex: 1; padding: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px; color: white;
+    font-size: 10px; font-weight: 600; cursor: pointer;
+  }
+  .practice-btn:active { background: #10b981; }
+
+  .nav { display: flex; justify-content: space-between; padding: 8px 16px 12px; gap: 6px; }
+  .nav-btn {
+    flex: 1; padding: 10px 4px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0; border-radius: 10px;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    line-height: 1.2;
+  }
+  .nav-btn:active { transform: scale(0.96); }
+  .nav-btn.again { background: linear-gradient(135deg, #dc2626, #991b1b); color: white; }
+  .nav-btn.hard { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+  .nav-btn.good { background: linear-gradient(135deg, #16a34a, #15803d); color: white; }
+  .nav-btn.easy { background: linear-gradient(135deg, #2563eb, #1e40af); color: white; }
+  .nav-btn small { display: block; font-size: 8px; opacity: 0.85; font-weight: 500; }
+
+  /* ===== IPA MODE ===== */
+  .ipa-content { padding: 14px; max-width: 700px; margin: 0 auto; }
+  .ipa-tabs {
+    display: flex; gap: 6px; padding: 10px 14px 4px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .ipa-tabs::-webkit-scrollbar { display: none; }
+  .ipa-tab {
+    padding: 7px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #cbd5e1; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap; cursor: pointer;
+  }
+  .ipa-tab.active { background: #8b5cf6; border-color: #8b5cf6; color: white; }
+  .ipa-tab:active { transform: scale(0.95); }
+
+  .ipa-section-header {
+    background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.15));
+    border: 1px solid rgba(139,92,246,0.3);
+    padding: 12px 14px; border-radius: 14px; margin-bottom: 12px;
+  }
+  .ipa-section-title { font-size: 15px; font-weight: 700; color: #c4b5fd; margin-bottom: 4px; }
+  .ipa-section-desc { font-size: 11px; color: #cbd5e1; line-height: 1.5; }
+
+  /* IPA Grid - quick overview */
+  .ipa-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .ipa-grid-cell {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 10px;
+    padding: 10px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ipa-grid-cell:active {
+    transform: scale(0.95);
+    background: rgba(59,130,246,0.3);
+  }
+  .ipa-grid-cell.hard {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.3);
+  }
+  .ipa-grid-cell.hard:active { background: rgba(239,68,68,0.3); }
+  .ipa-grid-symbol {
+    font-size: 20px; font-weight: 700;
+    color: #fde68a; font-family: "Times New Roman", serif;
+    margin-bottom: 2px;
+  }
+  .ipa-grid-example { font-size: 9px; color: #cbd5e1; font-weight: 600; }
+
+  /* IPA Detail Card */
+  .ipa-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 14px;
+    margin-bottom: 12px;
+  }
+  .ipa-card.hard {
+    border-left: 4px solid #ef4444;
+  }
+  .ipa-card-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .ipa-big-symbol {
+    font-size: 28px; font-weight: 700;
+    color: #fde68a; font-family: "Times New Roman", serif;
+    background: rgba(251,191,36,0.15);
+    width: 54px; height: 54px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid rgba(251,191,36,0.3);
+  }
+  .ipa-info { flex: 1; min-width: 0; }
+  .ipa-type { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .ipa-name { font-size: 13px; color: white; font-weight: 700; margin-top: 2px; }
+  .hard-badge {
+    background: #ef4444; color: white;
+    padding: 2px 6px; border-radius: 6px;
+    font-size: 9px; font-weight: 700;
+    margin-top: 4px; display: inline-block;
+  }
+
+  .vn-tip-mini {
+    font-size: 11px; color: #fbbf24;
+    background: rgba(251,191,36,0.08);
+    padding: 7px 9px; border-radius: 8px;
+    border-left: 3px solid #fbbf24;
+    line-height: 1.4; margin-bottom: 10px;
+  }
+
+  .ipa-examples {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .ipa-example-word {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 8px;
+    padding: 7px 4px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .ipa-example-word:active { background: rgba(59,130,246,0.3); }
+  .iew-word { font-size: 12px; font-weight: 700; color: white; }
+  .iew-ipa { font-size: 9px; color: #fde68a; font-family: "Times New Roman", serif; margin-top: 2px; }
+
+  .ipa-sentence {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 8px; padding: 8px;
+    font-size: 11px; color: #d1fae5;
+    line-height: 1.5; font-style: italic;
+    cursor: pointer;
+  }
+  .ipa-sentence:active { background: rgba(16,185,129,0.2); }
+  .ipa-sentence .highlight {
+    background: rgba(251,191,36,0.25); color: #fde68a;
+    padding: 1px 3px; border-radius: 3px;
+    font-weight: 600; font-style: normal;
+  }
+  .ipa-sentence-label {
+    font-size: 9px; color: #10b981;
+    font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 3px; font-style: normal;
+  }
+
+  .footer-tip {
+    text-align: center; font-size: 10px;
+    color: #64748b; padding: 14px 0;
+  }
+
+  .legend {
+    display: flex; gap: 12px; justify-content: center;
+    margin-bottom: 12px; font-size: 10px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .legend-dot.normal { background: #3b82f6; }
+  .legend-dot.hard-color { background: #ef4444; }
+</style>
 </head>
 <body>
-    <a href="https://tinnguyentrung89.github.io/ws0208/page2.html">Go to Page 2 </a>
+
+<!-- SETUP HELP MODAL -->
+<div id="setupModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; padding:20px; overflow-y:auto;">
+  <div style="max-width:480px; margin:20px auto; background:linear-gradient(135deg, #1e293b, #0f172a); border:1px solid rgba(255,255,255,0.15); border-radius:18px; padding:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div style="font-size:17px; font-weight:700; color:#fde68a;">🚀 Setup Guide</div>
+      <button onclick="document.getElementById('setupModal').style.display='none'" style="background:rgba(255,255,255,0.1); border:none; color:white; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer;">×</button>
+    </div>
+    <div style="font-size:12px; color:#94a3b8; line-height:1.6; margin-bottom:14px;">
+      Setup 1 lần (~10 phút) để có app native trên iPhone + tự động mở đúng giờ học.
+    </div>
+
+    <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; border-radius:8px; margin-bottom:12px;">
+      <div style="font-weight:700; color:#93c5fd; font-size:13px; margin-bottom:6px;">📦 BƯỚC 1: Deploy file lên Netlify (5 phút)</div>
+      <div style="font-size:11px; color:#cbd5e1; line-height:1.5;">
+        1. Trên máy tính, mở <a href="https://app.netlify.com/drop" target="_blank" style="color:#fbbf24;">app.netlify.com/drop</a><br>
+        2. Kéo file <b>IT_English_Master.html</b> vào ô màu xanh<br>
+        3. Đợi 5-10 giây → có URL như <code style="background:rgba(0,0,0,0.3); padding:1px 4px; border-radius:3px;">https://abc-xyz.netlify.app</code><br>
+        4. Tap "Claim your site" → đăng ký free (giữ vĩnh viễn)<br>
+        5. <b>Copy URL</b> — dùng cho bước sau
+      </div>
+    </div>
+
+    <div style="background:rgba(16,185,129,0.1); border-left:3px solid #10b981; padding:10px; border-radius:8px; margin-bottom:12px;">
+      <div style="font-weight:700; color:#4ade80; font-size:13px; margin-bottom:6px;">📱 BƯỚC 2: Add to Home Screen (30 giây)</div>
+      <div style="font-size:11px; color:#cbd5e1; line-height:1.5;">
+        1. Mở <b>Safari</b> trên iPhone (KHÔNG dùng Chrome)<br>
+        2. Paste URL Netlify vào → app mở<br>
+        3. Tap nút <b>Share</b> (ô vuông + mũi tên dưới màn hình)<br>
+        4. Cuộn xuống → tap <b>"Add to Home Screen"</b><br>
+        5. Đặt tên <b>"IT English"</b> → Add<br>
+        ✅ Icon xuất hiện trên Home Screen như native app
+      </div>
+    </div>
+
+    <div style="background:rgba(139,92,246,0.1); border-left:3px solid #8b5cf6; padding:10px; border-radius:8px; margin-bottom:12px;">
+      <div style="font-weight:700; color:#c4b5fd; font-size:13px; margin-bottom:6px;">🤖 BƯỚC 3: Setup Shortcuts Auto-open (3 phút)</div>
+      <div style="font-size:11px; color:#cbd5e1; line-height:1.5;">
+        Mở app <b>Shortcuts</b> trên iPhone → tab <b>Automation</b><br><br>
+        Tạo 3 automations giống nhau (8:00 / 12:30 / 21:00):<br>
+        1. Tap <b>+</b> → <b>Create Personal Automation</b><br>
+        2. Chọn <b>Time of Day</b><br>
+        3. Set giờ + <b>Daily</b> + ✅ <b>Run Immediately</b><br>
+        4. Next → Add Action → search <b>"Open URL"</b><br>
+        5. Paste URL Netlify → Done<br><br>
+        ✅ Đúng giờ là banner hiện → tap 1 phát mở app
+      </div>
+    </div>
+
+    <div style="background:rgba(251,191,36,0.1); border-left:3px solid #fbbf24; padding:10px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-weight:700; color:#fde68a; font-size:13px; margin-bottom:6px;">💾 BƯỚC 4: Save URL vào Reminders</div>
+      <div style="font-size:11px; color:#cbd5e1; line-height:1.5;">
+        1. Mở app <b>Reminders</b> → tìm 3 reminders "IT English"<br>
+        2. Mở từng cái → tap vào note<br>
+        3. Paste URL Netlify vào đầu note<br>
+        4. iPhone sẽ auto-detect URL thành link tap được<br>
+        ✅ Khi reminder kêu → tap URL → mở app
+      </div>
+    </div>
+
+    <button onclick="localStorage.setItem('setupDone','1'); document.getElementById('setupModal').style.display='none';" style="width:100%; padding:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; color:white; font-weight:700; font-size:14px; border-radius:10px; cursor:pointer; margin-bottom:8px;">
+      ✓ Đã setup xong — đừng hiện lại
+    </button>
+    <button onclick="document.getElementById('setupModal').style.display='none';" style="width:100%; padding:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#cbd5e1; font-size:13px; border-radius:10px; cursor:pointer;">
+      Để sau, đóng tạm
+    </button>
+  </div>
+</div>
+
+<!-- MODE SWITCHER -->
+<div class="mode-switcher">
+  <button class="mode-btn active" id="modeFlashcards">🎯 Flashcards</button>
+  <button class="mode-btn" id="modeIpa">🎤 IPA Chart</button>
+  <button class="mode-btn" onclick="document.getElementById('setupModal').style.display='block'" style="flex:0 0 auto; padding:10px 12px;">⚙️</button>
+</div>
+
+<!-- ===== FLASHCARD MODE ===== -->
+<div id="flashcardSection">
   <header>
-    <h1>Nguyễn Văn B</h1>
-    <h1>Risk Manager</h1>
+    <div class="title">🎯 IT English Flashcards Pro</div>
+    <div class="subtitle">113 terms · SRS · Dialogs · Practice</div>
+    <button id="prodToggle" onclick="toggleProduction()" style="margin-top:8px; width:100%; padding:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer;">🔁 Chế độ: EN → VN (nhận diện) · bấm để đổi sang VN → EN (luyện nói)</button>
+  </header>
+
+  <div class="controls" id="controls"></div>
+
+  <div class="progress">
+    <span id="progressText">1 / 100</span>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span id="modeText">All</span>
+  </div>
+
+  <div class="stats">
+    <span class="stat-known" id="knownCount">✓ 0 mastered</span>
+    <span class="stat-unknown" id="unknownCount">↻ 0 review</span>
+    <span style="color:#fbbf24" id="dueCount">⏰ 0 due</span>
+    <span id="resetBtn" style="cursor:pointer; text-decoration: underline;">Reset</span>
+  </div>
+
+  <div class="card-area" id="cardArea">
+    <div class="card" id="card">
+      <div class="face face-front">
+        <div class="card-header">
+          <span class="category-tag" id="catFront">EMAIL</span>
+          <span class="srs-level" id="srsFront">📚 New</span>
+          <span class="card-num" id="numFront">1 / 100</span>
+        </div>
+        <div class="emoji-display" id="emojiFront">📬</div>
+        <div style="text-align: center;">
+          <div class="term" id="termFront">mail queue</div>
+          <div class="ipa" id="ipaFront">/meɪl kjuː/</div>
+          <button class="speak-btn" id="speakFrontBtn" onclick="event.stopPropagation(); speakTerm()">🔊 Listen</button>
+          <div class="tap-hint" id="frontHint">Tap to see meaning</div>
+          <div class="swipe-hint">← Swipe to next card</div>
+        </div>
+      </div>
+      <div class="face face-back">
+        <div class="card-header">
+          <span class="category-tag" id="catBack">EMAIL</span>
+          <span class="card-num" id="numBack">1 / 100</span>
+        </div>
+        <div class="back-emoji" id="emojiBack">📬</div>
+        <div class="term" id="termBack" style="display:none; font-size:22px; margin-bottom:2px;"></div>
+        <div class="ipa" id="ipaBack" style="display:none;"></div>
+        <div class="meaning-vn" id="meaningBack">hàng đợi mail</div>
+
+        <div class="section-label">💡 Memory Hook</div>
+        <div class="memory-tip" id="memoryTip">Mail + xếp hàng = email đang chờ gửi</div>
+
+        <div class="section-label">📝 Example sentence</div>
+        <div class="example-box"><span id="exampleBack"></span> <button class="speak-btn" style="padding:4px 10px; font-size:11px; margin-left:6px;" onclick="event.stopPropagation(); speakExample()">🔊</button></div>
+
+        <div class="section-label">💬 Real Dialog (Workplace)</div>
+        <div class="dialog-box" id="dialogBox"></div>
+
+        <div class="section-label">🎯 Practice — Repeat Out Loud</div>
+        <div class="practice-box">
+          <div class="practice-step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>Listen 3x</strong> — focus on stress and rhythm</div>
+          </div>
+          <div class="practice-step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>Pause 3s</strong>, then say term <strong>3x slow</strong></div>
+          </div>
+          <div class="practice-step">
+            <div class="step-num">3</div>
+            <div class="step-text">Read example <strong>2x out loud</strong></div>
+          </div>
+          <div class="practice-step">
+            <div class="step-num">4</div>
+            <div class="step-text">Read dialog — <strong>play both roles</strong> 1x</div>
+          </div>
+          <div class="practice-buttons">
+            <button class="practice-btn" onclick="event.stopPropagation(); speakTerm()">🔊 Term</button>
+            <button class="practice-btn" onclick="event.stopPropagation(); speakDialog()">🎭 Full Dialog</button>
+          </div>
+        </div>
+        <div class="tap-hint" style="margin-top:8px;">Tap to flip back</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn again" onclick="rateCard(1)">↻ Again<small>&lt;1m</small></button>
+    <button class="nav-btn hard" onclick="rateCard(2)">😓 Hard<small>1d</small></button>
+    <button class="nav-btn good" onclick="rateCard(3)">✓ Good<small>3d</small></button>
+    <button class="nav-btn easy" onclick="rateCard(4)">⭐ Easy<small>7d</small></button>
+  </div>
+</div>
+
+<!-- ===== IPA MODE ===== -->
+<div id="ipaSection" style="display:none;">
+  <div class="ipa-tabs">
+    <div class="ipa-tab active" data-ipatab="overview">🗺️ Overview</div>
+    <div class="ipa-tab" data-ipatab="consonants">🔊 Consonants (24)</div>
+    <div class="ipa-tab" data-ipatab="vowels">🎵 Vowels (20)</div>
+    <div class="ipa-tab" data-ipatab="hard">⚠️ Hard for VN</div>
+  </div>
+
+  <div class="ipa-content" id="ipaContent"></div>
+</div>
+
+<script>
+// ============================================================
+// FLASHCARDS DATA (compressed - 100 cards from previous file)
+// ============================================================
+const cards = [
+  {c:"EMAIL", emoji:"📬", t:"mail queue", ipa:"/meɪl kjuː/", m:"hàng đợi mail", e:"Let me check the mail queue first to see how many messages are stuck.", tip:"Mail + xếp hàng = email đang chờ gửi",
+    dialog:[{s:"Manager", t:"Why are users complaining about delayed emails?"},{s:"You", t:"I'm checking the |mail queue| right now. It looks like over 200 emails are stuck."},{s:"Manager", t:"How long until they go out?"},{s:"You", t:"I'll clear the queue and they should be delivered within 10 minutes."}]},
+  {c:"EMAIL", emoji:"⏸️", t:"deferred email", ipa:"/dɪˈfɜːrd ˈiːmeɪl/", m:"email bị treo", e:"Some of the emails are deferred because the server can't deliver them right now.", tip:"Defer = hoãn. Email bị 'pause' chưa gửi được",
+    dialog:[{s:"User", t:"My emails are not reaching the customer. What's wrong?"},{s:"You", t:"They are |deferred emails| — temporarily held by the server."},{s:"User", t:"Will they be sent automatically?"},{s:"You", t:"Yes, the system will retry every 15 minutes for up to 5 days."}]},
+  {c:"EMAIL", emoji:"↩️", t:"bounce message", ipa:"/baʊns ˈmesɪdʒ/", m:"email bị trả về", e:"The user received a bounce message saying the address doesn't exist.", tip:"Bounce = nảy lại như quả bóng",
+    dialog:[{s:"User", t:"I got a strange email saying my message could not be delivered."},{s:"You", t:"That's a |bounce message|. The recipient address doesn't exist."},{s:"User", t:"Can you confirm the correct email?"},{s:"You", t:"Sure, please share the original address and I'll verify it."}]},
+  {c:"EMAIL", emoji:"🚫", t:"blacklisted IP", ipa:"/ˈblæklɪstɪd aɪ piː/", m:"IP bị blacklist", e:"It looks like our sending IP has been blacklisted on a spam database.", tip:"Black list = danh sách đen",
+    dialog:[{s:"Manager", t:"Why can't we send emails to Gmail users?"},{s:"You", t:"Our sending IP is |blacklisted| on a major spam database."},{s:"Manager", t:"What's the next step?"},{s:"You", t:"I've submitted a delisting request and applied stricter filtering."}]},
+  {c:"EMAIL", emoji:"🔓", t:"compromised mailbox", ipa:"/ˈkɒmprəmaɪzd ˈmeɪlbɒks/", m:"mailbox bị chiếm quyền", e:"This looks like a compromised mailbox, so I'll disable it right away.", tip:"Compromise = bị xâm phạm",
+    dialog:[{s:"Security", t:"There's unusual outbound traffic from one user account."},{s:"You", t:"It looks like a |compromised mailbox|. I'll disable it immediately."},{s:"Security", t:"Any data leaked?"},{s:"You", t:"Investigating now. I'll force a password reset and review logs."}]},
+  {c:"EMAIL", emoji:"📤", t:"outbound email traffic", ipa:"/ˈaʊtbaʊnd ˈiːmeɪl ˈtræfɪk/", m:"lưu lượng email ra", e:"We're seeing abnormal outbound email traffic from one account.", tip:"Out + bound = đi ra ngoài",
+    dialog:[{s:"Monitor", t:"Outbound traffic spiked 500% in the last hour."},{s:"You", t:"Abnormal |outbound email traffic| — likely a compromised account."},{s:"Monitor", t:"Should we block it?"},{s:"You", t:"Yes, block the source mailbox and start incident response."}]},
+  {c:"EMAIL", emoji:"🔁", t:"SMTP relay", ipa:"/ˌes em tiː ˈpiː ˈriːleɪ/", m:"chuyển tiếp SMTP", e:"We need to verify the SMTP relay configuration before the app can send mail.", tip:"Relay = chạy tiếp sức",
+    dialog:[{s:"Vendor", t:"Your application can't send notification emails."},{s:"You", t:"It needs an |SMTP relay| configured to our mail server."},{s:"Vendor", t:"What credentials do we use?"},{s:"You", t:"I'll create a service account and share the connection details."}]},
+  {c:"EMAIL", emoji:"⭐", t:"sender reputation", ipa:"/ˈsendər ˌrepjuˈteɪʃn/", m:"uy tín IP gửi", e:"Our sender reputation has dropped because of the high bounce rate.", tip:"Reputation = danh tiếng",
+    dialog:[{s:"Manager", t:"Customers say our newsletters end up in spam."},{s:"You", t:"Our |sender reputation| dropped due to high bounce rates."},{s:"Manager", t:"How can we fix it?"},{s:"You", t:"Clean the list, set up DKIM, and warm up a new sending IP."}]},
+  {c:"EMAIL", emoji:"🔐", t:"authentication failure", ipa:"/ɔːˌθentɪˈkeɪʃn ˈfeɪljər/", m:"lỗi xác thực", e:"The logs show repeated authentication failures for this user.", tip:"Authen = xác thực",
+    dialog:[{s:"User", t:"Outlook keeps asking for my password."},{s:"You", t:"The logs show repeated |authentication failures|."},{s:"User", t:"Did my account get locked?"},{s:"You", t:"Yes, I'll unlock it and reset your password now."}]},
+  {c:"EMAIL", emoji:"📜", t:"TLS certificate issue", ipa:"/tiː el es sərˈtɪfɪkət ˈɪʃuː/", m:"lỗi chứng chỉ TLS", e:"The mail service is down because of a TLS certificate issue.", tip:"Certificate = chứng chỉ",
+    dialog:[{s:"Monitor", t:"External mail servers are rejecting our messages."},{s:"You", t:"|TLS certificate issue| — the cert expired this morning."},{s:"Monitor", t:"How fast can you fix?"},{s:"You", t:"Renewing via Let's Encrypt. ETA 15 minutes."}]},
+  {c:"EMAIL", emoji:"🛑", t:"recipient server rejection", ipa:"/rɪˈsɪpiənt ˈsɜːrvər rɪˈdʒekʃn/", m:"server người nhận từ chối", e:"We got a recipient server rejection, so they've flagged us as spam.", tip:"Recipient = người nhận",
+    dialog:[{s:"User", t:"My email to the client bounced back."},{s:"You", t:"|Recipient server rejection| — they marked us as spam."},{s:"User", t:"Can we whitelist?"},{s:"You", t:"Ask the client to add our domain to their allowlist."}]},
+  {c:"EMAIL", emoji:"🚦", t:"mailbox sending limit", ipa:"/ˈmeɪlbɒks ˈsendɪŋ ˈlɪmɪt/", m:"giới hạn gửi mail", e:"I'll apply a temporary mailbox sending limit of 100 emails per hour.", tip:"Giới hạn lưu lượng",
+    dialog:[{s:"Manager", t:"How do we prevent another spam incident?"},{s:"You", t:"I'll apply a |mailbox sending limit| of 100 per hour."},{s:"Manager", t:"Enough for normal users?"},{s:"You", t:"Yes, average users send under 50 per day."}]},
+  {c:"EMAIL", emoji:"🔍", t:"mail log analysis", ipa:"/meɪl lɒɡ əˈnæləsɪs/", m:"phân tích log mail", e:"I'm running a mail log analysis to find the bottleneck.", tip:"Log = nhật ký",
+    dialog:[{s:"Manager", t:"Do we know why emails are delayed?"},{s:"You", t:"I'm running |mail log analysis| to identify the bottleneck."},{s:"Manager", t:"Found anything?"},{s:"You", t:"Yes, one mailbox sends huge attachments that block the queue."}]},
+  {c:"EMAIL", emoji:"📋", t:"SPF record", ipa:"/es piː ef ˈrekɔːrd/", m:"bản ghi SPF", e:"Let me check your SPF record first, since that's a common cause.", tip:"SPF = ai được phép gửi mail",
+    dialog:[{s:"User", t:"My emails to partners go to spam."},{s:"You", t:"Let me check your |SPF record| first."},{s:"User", t:"What is that?"},{s:"You", t:"It tells receiving servers which IPs can send for our domain."}]},
+  {c:"EMAIL", emoji:"⚠️", t:"email delivery issue", ipa:"/ˈiːmeɪl dɪˈlɪvəri ˈɪʃuː/", m:"sự cố email", e:"We're currently investigating an email delivery issue.", tip:"Delivery = giao hàng",
+    dialog:[{s:"Manager", t:"What's the status of the email problem?"},{s:"You", t:"We're investigating an |email delivery issue|."},{s:"Manager", t:"ETA?"},{s:"You", t:"Initial fix in 30 minutes. Full report by end of day."}]},
+
+  {c:"VM", emoji:"❌", t:"VM startup failure", ipa:"/viː em ˈstɑːrtʌp ˈfeɪljər/", m:"lỗi khởi động VM", e:"I can see a VM startup failure in the logs after last night's patch.", tip:"Bấm power VM nhưng không lên",
+    dialog:[{s:"User", t:"My production server won't boot up after the patch."},{s:"You", t:"I see a |VM startup failure| in the logs. Investigating."},{s:"User", t:"How serious?"},{s:"You", t:"I'll roll back to last night's snapshot. Up in 5 minutes."}]},
+  {c:"VM", emoji:"⚠️", t:"cluster not ready", ipa:"/ˈklʌstər nɒt ˈredi/", m:"cluster chưa sẵn sàng", e:"The system reports that the cluster is not ready because one node lost quorum.", tip:"Cluster chưa đồng bộ",
+    dialog:[{s:"Manager", t:"Why are all VMs offline?"},{s:"You", t:"The system reports |cluster not ready|. One node lost quorum."},{s:"Manager", t:"Bring it back?"},{s:"You", t:"Yes, restarting the cluster service on the failed node now."}]},
+  {c:"VM", emoji:"🟢", t:"node status", ipa:"/noʊd ˈsteɪtəs/", m:"trạng thái node", e:"Let's check the node status in the cluster manager first.", tip:"Node = 1 server trong cluster",
+    dialog:[{s:"Junior", t:"VMs on host 3 are not responding."},{s:"You", t:"Check the |node status| in the cluster manager first."},{s:"Junior", t:"It shows disconnected."},{s:"You", t:"Got it. Checking network connectivity to that node."}]},
+  {c:"VM", emoji:"💾", t:"storage status", ipa:"/ˈstɔːrɪdʒ ˈsteɪtəs/", m:"trạng thái storage", e:"I'll verify the storage status before we restart anything.", tip:"SAN còn online không",
+    dialog:[{s:"Junior", t:"Should I restart the VM now?"},{s:"You", t:"Verify the |storage status| first. We don't want data corruption."},{s:"Junior", t:"Storage shows healthy."},{s:"You", t:"Good. Proceed with the restart."}]},
+  {c:"VM", emoji:"📊", t:"datastore capacity", ipa:"/ˈdeɪtəstɔːr kəˈpæsəti/", m:"dung lượng datastore", e:"The datastore is almost full, so we need to free up some space soon.", tip:"Kho dữ liệu VM còn bao nhiêu",
+    dialog:[{s:"Monitor", t:"Datastore alert just fired."},{s:"You", t:"|Datastore capacity| is at 92%. Need to expand or migrate."},{s:"Manager", t:"What's faster?"},{s:"You", t:"Migration. Moving three test VMs to free up space."}]},
+  {c:"VM", emoji:"📈", t:"disk expansion", ipa:"/dɪsk ɪkˈspænʃn/", m:"mở rộng ổ đĩa", e:"We need to expand the virtual disk to give the server more space.", tip:"Expand = nở ra",
+    dialog:[{s:"User", t:"My database server is out of disk space."},{s:"You", t:"I'll perform |disk expansion| from 200GB to 500GB."},{s:"User", t:"Database go down?"},{s:"You", t:"No, can be done online. Five minutes max."}]},
+  {c:"VM", emoji:"⏪", t:"snapshot rollback", ipa:"/ˈsnæpʃɒt ˈroʊlbæk/", m:"rollback snapshot", e:"If the change fails, we'll do a snapshot rollback to the previous state.", tip:"Quay về ảnh chụp cũ",
+    dialog:[{s:"Manager", t:"What's the rollback plan if patch breaks things?"},{s:"You", t:"|Snapshot rollback|. Taking snapshot before applying."},{s:"Manager", t:"How long to restore?"},{s:"You", t:"Under 2 minutes. Instant on this storage."}]},
+  {c:"VM", emoji:"🚚", t:"VM migration", ipa:"/viː em maɪˈɡreɪʃn/", m:"di chuyển VM", e:"I'll schedule the VM migration during the maintenance window.", tip:"Chuyển VM giữa các host",
+    dialog:[{s:"Manager", t:"When are we moving the database to the new host?"},{s:"You", t:"|VM migration| scheduled for Saturday 2 AM."},{s:"Manager", t:"Downtime?"},{s:"You", t:"None — live migration with zero impact."}]},
+  {c:"VM", emoji:"🔌", t:"virtual switch", ipa:"/ˈvɜːrtʃuəl swɪtʃ/", m:"switch ảo", e:"I'm creating a new virtual switch for the 10Gb network.", tip:"Switch ảo trong hypervisor",
+    dialog:[{s:"Network", t:"How will new VMs connect to 10Gb network?"},{s:"You", t:"I'll create a new |virtual switch| dedicated to that network."},{s:"Network", t:"VLAN tagged?"},{s:"You", t:"Yes, VLAN 200 with promiscuous mode disabled."}]},
+  {c:"VM", emoji:"🎯", t:"port group", ipa:"/pɔːrt ɡruːp/", m:"port group", e:"Please make sure the VM is connected to the correct port group.", tip:"Nhóm port cùng VLAN",
+    dialog:[{s:"Junior", t:"The VM has no internet."},{s:"You", t:"Check if it's connected to the correct |port group|."},{s:"Junior", t:"On management network, not production."},{s:"You", t:"Move it to the production port group."}]},
+  {c:"VM", emoji:"⬜", t:"unallocated space", ipa:"/ʌnˈæləkeɪtɪd speɪs/", m:"chưa phân vùng", e:"The disk still has some unallocated space we can extend into.", tip:"Đã có disk to nhưng partition chưa nhận",
+    dialog:[{s:"User", t:"You expanded the disk but I still don't see more space."},{s:"You", t:"|Unallocated space| at OS level. Need to extend the partition."},{s:"User", t:"Lose data?"},{s:"You", t:"No, online operation. Safe."}]},
+  {c:"VM", emoji:"🛠️", t:"hypervisor issue", ipa:"/ˈhaɪpərvaɪzər ˈɪʃuː/", m:"lỗi ảo hóa", e:"This looks like a hypervisor-level issue rather than a guest problem.", tip:"Lỗi sâu hơn OS",
+    dialog:[{s:"User", t:"My VM keeps freezing every hour."},{s:"You", t:"This looks like a |hypervisor issue|, not the OS."},{s:"User", t:"How do you know?"},{s:"You", t:"All VMs on the same host show the same pattern."}]},
+  {c:"VM", emoji:"🔗", t:"passthrough device", ipa:"/ˈpæsθruː dɪˈvaɪs/", m:"thiết bị passthrough", e:"Using a passthrough device may limit how easily we can migrate the VM.", tip:"Card cứng trực tiếp cho VM",
+    dialog:[{s:"Vendor", t:"We need direct GPU access for AI workload."},{s:"You", t:"I can configure a |passthrough device| to that VM."},{s:"Vendor", t:"Any limitations?"},{s:"You", t:"VM can't be live-migrated to another host."}]},
+  {c:"VM", emoji:"⚙️", t:"VM configuration", ipa:"/viː em kənˌfɪɡjəˈreɪʃn/", m:"cấu hình VM", e:"I'd like to review the VM configuration before we go live.", tip:"CPU, RAM, disk của VM",
+    dialog:[{s:"User", t:"My new VM is really slow."},{s:"You", t:"The |VM configuration| only has 2 vCPUs and 4GB RAM."},{s:"User", t:"Can we increase?"},{s:"You", t:"Yes, bumping to 4 vCPUs and 16GB after a quick reboot."}]},
+  {c:"VM", emoji:"🌐", t:"virtual network adapter", ipa:"/ˈvɜːrtʃuəl ˈnetwɜːrk əˈdæptər/", m:"card mạng ảo", e:"The virtual network adapter is connected to the wrong network.", tip:"vNIC của VM",
+    dialog:[{s:"User", t:"Why can't I reach the application server?"},{s:"You", t:"The |virtual network adapter| is on the wrong VLAN."},{s:"User", t:"Quick fix?"},{s:"You", t:"I'll reassign it. Should work in under a minute."}]},
+
+  {c:"SAMBA", emoji:"📁", t:"SMB share", ipa:"/es em biː ʃer/", m:"thư mục share SMB", e:"The user can't access the SMB share, so I'm checking the permissions.", tip:"Folder dùng chung qua mạng",
+    dialog:[{s:"User", t:"I can't open the project folder on the server."},{s:"You", t:"Which |SMB share| are you trying to access?"},{s:"User", t:"\\\\fileserver\\projects"},{s:"You", t:"Let me check your group membership."}]},
+  {c:"SAMBA", emoji:"🔑", t:"share permission", ipa:"/ʃer pərˈmɪʃn/", m:"quyền share", e:"Let me check the share permissions first.", tip:"Quyền ở mức share (network)",
+    dialog:[{s:"User", t:"I can see the folder but can't open it."},{s:"You", t:"Sounds like a |share permission| problem."},{s:"User", t:"Fix it?"},{s:"You", t:"Yes, I'll add your AD group with Read access."}]},
+  {c:"SAMBA", emoji:"🗂️", t:"filesystem permission", ipa:"/ˈfaɪlsɪstəm pərˈmɪʃn/", m:"quyền filesystem", e:"The filesystem permissions might be different from the share permissions.", tip:"Quyền ở mức ổ cứng (NTFS)",
+    dialog:[{s:"User", t:"I have share access but still get denied."},{s:"You", t:"The |filesystem permission| might be blocking you."},{s:"User", t:"Difference?"},{s:"You", t:"Share is the network door, filesystem is the room lock."}]},
+  {c:"SAMBA", emoji:"✅", t:"effective permission", ipa:"/ɪˈfektɪv pərˈmɪʃn/", m:"quyền hiệu lực", e:"I'll verify the user's effective permissions on that folder.", tip:"Quyền cuối cùng",
+    dialog:[{s:"Manager", t:"The user says they should have full access."},{s:"You", t:"Let me verify the |effective permission|."},{s:"Manager", t:"What does it show?"},{s:"You", t:"Read-only — there's a deny rule on a parent group."}]},
+  {c:"SAMBA", emoji:"👥", t:"group-based access", ipa:"/ɡruːp beɪst ˈækses/", m:"phân quyền theo group", e:"Access to this folder is controlled by AD groups.", tip:"Gán quyền cho group",
+    dialog:[{s:"Manager", t:"Can you give John direct access to HR folder?"},{s:"You", t:"We use |group-based access|. Adding him to HR-Read group."},{s:"Manager", t:"Why not direct?"},{s:"You", t:"For audit and easier offboarding."}]},
+  {c:"SAMBA", emoji:"✏️", t:"modify permission", ipa:"/ˈmɒdɪfaɪ pərˈmɪʃn/", m:"quyền sửa", e:"This user needs modify permission, not just read access.", tip:"Edit/sửa file",
+    dialog:[{s:"User", t:"I can read files but can't save changes."},{s:"You", t:"You only have read. You need |modify permission|."},{s:"User", t:"Grant it?"},{s:"You", t:"Yes, adding you to the editors group now."}]},
+  {c:"SAMBA", emoji:"👁️", t:"read-only access", ipa:"/riːd ˈoʊnli ˈækses/", m:"quyền chỉ đọc", e:"Right now the user only has read-only access.", tip:"Chỉ xem, không sửa",
+    dialog:[{s:"Auditor", t:"I need to review financial reports without modifying."},{s:"You", t:"I'll give you |read-only access| to the finance folder."},{s:"Auditor", t:"How long?"},{s:"You", t:"30 days, then auto-expires."}]},
+  {c:"SAMBA", emoji:"🔽", t:"permission inheritance", ipa:"/pərˈmɪʃn ɪnˈherɪtəns/", m:"kế thừa quyền", e:"I'll enable permission inheritance so the subfolders get the same rights.", tip:"Folder con thừa kế quyền",
+    dialog:[{s:"User", t:"New subfolders don't have correct permissions."},{s:"You", t:"|Permission inheritance| is broken on parent."},{s:"User", t:"Fix?"},{s:"You", t:"Re-enable inheritance and propagate down."}]},
+  {c:"SAMBA", emoji:"❌", t:"permission denied", ipa:"/pərˈmɪʃn dɪˈnaɪd/", m:"từ chối quyền", e:"The error says 'permission denied' when the user opens the file.", tip:"Lỗi access cổ điển",
+    dialog:[{s:"User", t:"I'm getting an error when opening the file."},{s:"You", t:"What does it say?"},{s:"User", t:"|Permission denied|."},{s:"You", t:"You're not in the access group. Let me add you."}]},
+  {c:"SAMBA", emoji:"👤", t:"file ownership", ipa:"/faɪl ˈoʊnərʃɪp/", m:"quyền sở hữu", e:"The file ownership is causing the access issue.", tip:"Owner = chủ file",
+    dialog:[{s:"User", t:"After migration I can't edit my own files."},{s:"You", t:"|File ownership| didn't transfer correctly."},{s:"User", t:"Fix?"},{s:"You", t:"Yes, taking ownership and reassigning to you."}]},
+  {c:"SAMBA", emoji:"🔒", t:"locked file", ipa:"/lɒkt faɪl/", m:"file bị khóa", e:"The file is locked because another user still has it open.", tip:"User khác đang mở",
+    dialog:[{s:"User", t:"Excel says someone else is using the file."},{s:"You", t:"|Locked file|. Mary opened it 30 minutes ago."},{s:"User", t:"Force close?"},{s:"You", t:"Yes, but I'll ping her first."}]},
+  {c:"SAMBA", emoji:"🟢", t:"active SMB session", ipa:"/ˈæktɪv es em biː ˈseʃn/", m:"phiên SMB", e:"Let me check the active SMB sessions on the server.", tip:"Kết nối SMB đang sống",
+    dialog:[{s:"Manager", t:"Who's currently using the file server?"},{s:"You", t:"Check |active SMB sessions|. About 47 users connected."},{s:"Manager", t:"Outside?"},{s:"You", t:"No, all from corporate network."}]},
+  {c:"SAMBA", emoji:"📜", t:"NTFS-style ACL", ipa:"/en tiː ef es staɪl eɪ siː el/", m:"ACL kiểu NTFS", e:"This share uses NTFS-style ACLs for its permissions.", tip:"ACL chi tiết kiểu Windows",
+    dialog:[{s:"Junior", t:"How do permissions work on this Linux server?"},{s:"You", t:"It uses |NTFS-style ACLs| through Samba."},{s:"Junior", t:"Same as Windows?"},{s:"You", t:"Almost. Stored in extended attributes."}]},
+  {c:"SAMBA", emoji:"🧪", t:"access validation", ipa:"/ˈækses ˌvælɪˈdeɪʃn/", m:"kiểm tra quyền", e:"After I change the permissions, I'll do an access validation with the user.", tip:"Test user vào được không",
+    dialog:[{s:"Manager", t:"Are the new permissions working?"},{s:"You", t:"Doing |access validation| with a test user."},{s:"Manager", t:"Result?"},{s:"You", t:"All good. Read, write, delete confirmed."}]},
+  {c:"SAMBA", emoji:"📝", t:"Samba config file", ipa:"/ˈsæmbə kənˈfɪɡ faɪl/", m:"file cấu hình Samba", e:"We should review the Samba config file before making changes.", tip:"smb.conf",
+    dialog:[{s:"Junior", t:"Where do I change share settings?"},{s:"You", t:"In the |Samba config file| at /etc/samba/smb.conf."},{s:"Junior", t:"After editing?"},{s:"You", t:"Run testparm first, then restart smbd."}]},
+
+  {c:"FIREWALL", emoji:"🌊", t:"traffic flow", ipa:"/ˈtræfɪk floʊ/", m:"luồng traffic", e:"Let's trace the traffic flow end to end to see where it stops.", tip:"Dòng chảy gói tin",
+    dialog:[{s:"User", t:"My application can't reach the server."},{s:"You", t:"Let me trace the |traffic flow| end to end."},{s:"User", t:"Find anything?"},{s:"You", t:"Traffic stops at the firewall — blocked by a new rule."}]},
+  {c:"FIREWALL", emoji:"🔍", t:"firewall policy lookup", ipa:"/ˈfaɪərwɔːl ˈpɒlɪsi ˈlʊkʌp/", m:"kiểm tra policy", e:"I'll run a firewall policy lookup to find which rule matches.", tip:"Tra rule nào match",
+    dialog:[{s:"Manager", t:"Why is this connection blocked?"},{s:"You", t:"Running |firewall policy lookup| to find the matching rule."},{s:"Manager", t:"Anything?"},{s:"You", t:"Rule 245 — implicit deny. Adding an allow rule."}]},
+  {c:"FIREWALL", emoji:"🛑", t:"blocked traffic", ipa:"/blɒkt ˈtræfɪk/", m:"traffic bị chặn", e:"The firewall logs show that the traffic is being blocked.", tip:"Firewall drop gói tin",
+    dialog:[{s:"Vendor", t:"Our integration is failing. Check?"},{s:"You", t:"Firewall logs show |blocked traffic| from your IP range."},{s:"Vendor", t:"Allow it?"},{s:"You", t:"Yes, adding your IPs to allowlist."}]},
+  {c:"FIREWALL", emoji:"🔢", t:"policy hit count", ipa:"/ˈpɒlɪsi hɪt kaʊnt/", m:"số lần hit", e:"The policy hit count is increasing, so the rule is being matched.", tip:"Đếm gói tin match rule",
+    dialog:[{s:"Manager", t:"Can we remove this old firewall rule?"},{s:"You", t:"Let me check the |policy hit count| first."},{s:"Manager", t:"What is it?"},{s:"You", t:"Zero hits in 90 days. Safe to remove."}]},
+  {c:"FIREWALL", emoji:"🎯", t:"destination NAT", ipa:"/ˌdestɪˈneɪʃn næt/", m:"NAT đích", e:"We'll set up destination NAT to reach the internal SFTP server.", tip:"Đổi IP đích",
+    dialog:[{s:"Vendor", t:"How do clients reach our SFTP server?"},{s:"You", t:"Through |destination NAT| on the edge firewall."},{s:"Vendor", t:"Which port?"},{s:"You", t:"Public IP port 22 to 192.168.10.5 port 22."}]},
+  {c:"FIREWALL", emoji:"📍", t:"source NAT", ipa:"/sɔːrs næt/", m:"NAT nguồn", e:"Source NAT is applied so the return traffic uses the right address.", tip:"Đổi IP nguồn",
+    dialog:[{s:"Junior", t:"Why does internal traffic show public IP outside?"},{s:"You", t:"That's |source NAT|. Internal IPs get translated."},{s:"Junior", t:"Return traffic?"},{s:"You", t:"Firewall handles it via connection table."}]},
+  {c:"FIREWALL", emoji:"♻️", t:"double NAT", ipa:"/ˈdʌbl næt/", m:"NAT hai lớp", e:"This design needs double NAT, which makes troubleshooting harder.", tip:"NAT 2 lần",
+    dialog:[{s:"Architect", t:"Can we connect both networks directly?"},{s:"You", t:"The current design requires |double NAT|."},{s:"Architect", t:"Messy."},{s:"You", t:"Yes, quick fix but should redesign long-term."}]},
+  {c:"FIREWALL", emoji:"➡️", t:"port forwarding", ipa:"/pɔːrt ˈfɔːrwərdɪŋ/", m:"forward port", e:"I'll configure port forwarding on the edge firewall.", tip:"Port public → internal server",
+    dialog:[{s:"Vendor", t:"Our team needs remote access to test server."},{s:"You", t:"I'll set up |port forwarding| on the edge firewall."},{s:"Vendor", t:"Access method?"},{s:"You", t:"Public IP port 5022. SSH key required."}]},
+  {c:"FIREWALL", emoji:"🔐", t:"IPSec tunnel", ipa:"/ˈaɪpisek ˈtʌnl/", m:"tunnel IPSec", e:"The traffic is routed through the IPSec tunnel to the remote site.", tip:"VPN site-to-site bảo mật",
+    dialog:[{s:"Manager", t:"How is the branch office connected to HQ?"},{s:"You", t:"Through an |IPSec tunnel| over the internet."},{s:"Manager", t:"Secure enough?"},{s:"You", t:"Yes — AES-256 encryption with IKEv2."}]},
+  {c:"FIREWALL", emoji:"🛤️", t:"VPN routing", ipa:"/viː piː en ˈruːtɪŋ/", m:"routing VPN", e:"The problem seems to be related to the VPN routing.", tip:"Định tuyến traffic qua VPN",
+    dialog:[{s:"User", t:"VPN connected but can't reach internal apps."},{s:"You", t:"Sounds like a |VPN routing| issue."},{s:"User", t:"What's wrong?"},{s:"You", t:"Split tunnel doesn't include app subnet. Fixing the policy."}]},
+  {c:"FIREWALL", emoji:"🔬", t:"SSL inspection", ipa:"/es es el ɪnˈspekʃn/", m:"kiểm tra SSL", e:"Turning on SSL inspection may affect performance.", tip:"Firewall mở SSL để scan",
+    dialog:[{s:"User", t:"Some HTTPS sites are very slow."},{s:"You", t:"|SSL inspection| is enabled on the firewall."},{s:"User", t:"Disable?"},{s:"You", t:"Not for security, but I can exclude trusted sites."}]},
+  {c:"FIREWALL", emoji:"🚇", t:"GRE tunnel", ipa:"/dʒiː ɑːr iː ˈtʌnl/", m:"tunnel GRE", e:"The remote side is using a GRE tunnel for this connection.", tip:"Tunnel cũ, không mã hóa",
+    dialog:[{s:"Vendor", t:"Our legacy device uses GRE only."},{s:"You", t:"OK, I'll configure a |GRE tunnel| on our side."},{s:"Vendor", t:"No encryption?"},{s:"You", t:"We'll wrap it with IPSec for security."}]},
+  {c:"FIREWALL", emoji:"📤", t:"source IP", ipa:"/sɔːrs aɪ piː/", m:"IP nguồn", e:"Could you please confirm the source IP address?", tip:"IP bên gửi",
+    dialog:[{s:"User", t:"My connection keeps dropping."},{s:"You", t:"What's your |source IP|?"},{s:"User", t:"10.10.5.42"},{s:"You", t:"Got it. Checking firewall logs."}]},
+  {c:"FIREWALL", emoji:"📥", t:"destination IP", ipa:"/ˌdestɪˈneɪʃn aɪ piː/", m:"IP đích", e:"Please confirm the destination IP and port.", tip:"IP bên nhận",
+    dialog:[{s:"User", t:"My app can't connect to the database."},{s:"You", t:"What |destination IP| and port?"},{s:"User", t:"10.20.30.40 on port 1433"},{s:"You", t:"OK, traffic blocked. Adding allow rule."}]},
+  {c:"FIREWALL", emoji:"✅", t:"allowed traffic", ipa:"/əˈlaʊd ˈtræfɪk/", m:"traffic cho phép", e:"This traffic is allowed by the firewall policy.", tip:"Firewall accept",
+    dialog:[{s:"User", t:"Test if my new app can reach the server."},{s:"You", t:"|Allowed traffic| confirmed in firewall logs."},{s:"User", t:"Why still failing?"},{s:"You", t:"Network is fine. Check the application config next."}]},
+
+  {c:"MONITOR", emoji:"🚨", t:"monitoring alert", ipa:"/ˈmɒnɪtərɪŋ əˈlɜːrt/", m:"cảnh báo monitor", e:"We just got a monitoring alert from Checkmk.", tip:"Còi báo động khi sự cố",
+    dialog:[{s:"Phone", t:"BEEP — alert at 3 AM"},{s:"You", t:"|Monitoring alert| from Checkmk — server unreachable."},{s:"Manager", t:"How bad?"},{s:"You", t:"Production down. Investigating now."}]},
+  {c:"MONITOR", emoji:"📡", t:"interface down alert", ipa:"/ˈɪntərfeɪs daʊn əˈlɜːrt/", m:"cảnh báo port down", e:"There's an interface down alert coming from the monitor.", tip:"Port mạng bị đứt",
+    dialog:[{s:"Manager", t:"What triggered the SMS alert?"},{s:"You", t:"|Interface down alert| on switch port 24."},{s:"Manager", t:"Connected there?"},{s:"You", t:"Backup server. Cable issue, sending technician."}]},
+  {c:"MONITOR", emoji:"🤥", t:"false positive alert", ipa:"/fɔːls ˈpɒzətɪv əˈlɜːrt/", m:"cảnh báo giả", e:"This might be a false positive alert rather than a real outage.", tip:"Báo sự cố nhưng OK",
+    dialog:[{s:"Junior", t:"We got 50 alerts in 5 minutes!"},{s:"You", t:"Looks like |false positive alerts|. Probe server has issues."},{s:"Junior", t:"Ignore them?"},{s:"You", t:"Yes, but I'll fix the probe and tune thresholds."}]},
+  {c:"MONITOR", emoji:"📏", t:"alert threshold", ipa:"/əˈlɜːrt ˈθreʃhoʊld/", m:"ngưỡng cảnh báo", e:"We need to adjust the alert threshold so it stops over-firing.", tip:"Vượt ngưỡng → alert",
+    dialog:[{s:"Manager", t:"Too many CPU alerts."},{s:"You", t:"The |alert threshold| is too low — 70%."},{s:"Manager", t:"Reasonable?"},{s:"You", t:"85% warning, 95% critical."}]},
+  {c:"MONITOR", emoji:"⏱️", t:"latency monitoring", ipa:"/ˈleɪtənsi ˈmɒnɪtərɪŋ/", m:"giám sát độ trễ", e:"I'll set up latency monitoring for those IP targets.", tip:"Đo thời gian phản hồi",
+    dialog:[{s:"Manager", t:"Users complain the app is slow."},{s:"You", t:"I'll set up |latency monitoring| to all critical endpoints."},{s:"Manager", t:"How fast?"},{s:"You", t:"Up in 10 minutes, dashboards in Grafana."}]},
+  {c:"MONITOR", emoji:"📉", t:"packet loss monitoring", ipa:"/ˈpækɪt lɒs ˈmɒnɪtərɪŋ/", m:"giám sát mất gói", e:"The dashboard is showing packet loss on that link.", tip:"% gói tin bị mất",
+    dialog:[{s:"User", t:"Video calls keep dropping every afternoon."},{s:"You", t:"|Packet loss monitoring| shows 5% loss 1-3 PM."},{s:"User", t:"Cause?"},{s:"You", t:"Network congestion. Need to upgrade the uplink."}]},
+  {c:"MONITOR", emoji:"📊", t:"interface utilization", ipa:"/ˈɪntərfeɪs ˌjuːtəlaɪˈzeɪʃn/", m:"sử dụng interface", e:"Interface utilization is high during business hours.", tip:"% bandwidth port",
+    dialog:[{s:"Manager", t:"Need a bigger internet line?"},{s:"You", t:"|Interface utilization| hits 95% during business hours."},{s:"Manager", t:"Recommend?"},{s:"You", t:"Upgrade from 500Mb to 1Gb."}]},
+  {c:"MONITOR", emoji:"📈", t:"historical graph", ipa:"/hɪˈstɒrɪkl ɡrɑːf/", m:"biểu đồ lịch sử", e:"Let me check the historical graph before I confirm the cause.", tip:"So sánh trend",
+    dialog:[{s:"Junior", t:"Is this CPU spike unusual?"},{s:"You", t:"Check the |historical graph| for past 30 days."},{s:"Junior", t:"Normal during backup hours."},{s:"You", t:"Right, expected behavior. Not an issue."}]},
+  {c:"MONITOR", emoji:"🔍", t:"service check", ipa:"/ˈsɜːrvɪs tʃek/", m:"kiểm tra service", e:"The service check is currently in a critical state.", tip:"Test 1 service sống/chết",
+    dialog:[{s:"Manager", t:"Which service is down?"},{s:"You", t:"The |service check| for the database is critical."},{s:"Manager", t:"How long?"},{s:"You", t:"5 minutes. Auto-restart failed, going manual."}]},
+  {c:"MONITOR", emoji:"🏓", t:"ICMP probe", ipa:"/aɪ siː em piː proʊb/", m:"kiểm tra ICMP", e:"The ICMP probe from the monitor is failing.", tip:"Ping test",
+    dialog:[{s:"Junior", t:"Why did the alert fire?"},{s:"You", t:"|ICMP probe| failed three times in a row."},{s:"Junior", t:"Server is down?"},{s:"You", t:"Probably, but check SSH too — ICMP might just be blocked."}]},
+
+  {c:"BACKUP", emoji:"💿", t:"backup repository", ipa:"/ˈbækʌp rɪˈpɒzətɔːri/", m:"nơi lưu backup", e:"The backup repository is stored on the NAS.", tip:"Kho chứa file backup",
+    dialog:[{s:"Manager", t:"Where do we store our backups?"},{s:"You", t:"The |backup repository| is on the NAS — 50TB capacity."},{s:"Manager", t:"Off-site?"},{s:"You", t:"Yes, weekly to AWS S3 Glacier."}]},
+  {c:"BACKUP", emoji:"📌", t:"restore point", ipa:"/rɪˈstɔːr pɔɪnt/", m:"điểm khôi phục", e:"Let me verify the latest restore point before we proceed.", tip:"Mốc thời gian khôi phục",
+    dialog:[{s:"User", t:"I deleted my entire project folder!"},{s:"You", t:"The latest |restore point| is from 2 hours ago."},{s:"User", t:"Restore it?"},{s:"You", t:"Yes, restoring now. ETA 5 minutes."}]},
+  {c:"BACKUP", emoji:"🧪", t:"restore test", ipa:"/rɪˈstɔːr test/", m:"test khôi phục", e:"We should run a restore test before we trust the backup.", tip:"Test mới biết backup OK",
+    dialog:[{s:"Auditor", t:"How do you know backups actually work?"},{s:"You", t:"We do monthly |restore tests| in isolated environment."},{s:"Auditor", t:"Last result?"},{s:"You", t:"Successful — full server restored in 23 minutes."}]},
+  {c:"BACKUP", emoji:"💥", t:"backup failure", ipa:"/ˈbækʌp ˈfeɪljər/", m:"lỗi backup", e:"There was a backup failure on the job that ran last night.", tip:"Job backup không thành công",
+    dialog:[{s:"Manager", t:"Why did we get a backup alert?"},{s:"You", t:"|Backup failure| on the database server."},{s:"Manager", t:"Cause?"},{s:"You", t:"NAS connection timeout. Re-running manually now."}]},
+  {c:"BACKUP", emoji:"🏗️", t:"bare-metal recovery", ipa:"/ber ˈmetl rɪˈkʌvəri/", m:"khôi phục toàn bộ", e:"I'll prepare a bare-metal recovery plan for that server.", tip:"Từ máy trắng → full server",
+    dialog:[{s:"Manager", t:"What if a server is completely lost?"},{s:"You", t:"We have a |bare-metal recovery| plan."},{s:"Manager", t:"How long?"},{s:"You", t:"Around 90 minutes from blank hardware to production."}]},
+  {c:"BACKUP", emoji:"⏰", t:"RTO", ipa:"/ɑːr tiː oʊ/", m:"thời gian khôi phục", e:"The expected RTO for this service is 15 minutes.", tip:"Recovery Time Objective",
+    dialog:[{s:"Manager", t:"How fast can we recover the email server?"},{s:"You", t:"|RTO| target is 15 minutes."},{s:"Manager", t:"Better?"},{s:"You", t:"With HA active-passive, 2 minutes."}]},
+  {c:"BACKUP", emoji:"🎯", t:"RPO", ipa:"/ɑːr piː oʊ/", m:"điểm khôi phục", e:"Our RPO depends on how often the backup runs.", tip:"Recovery Point Objective",
+    dialog:[{s:"Manager", t:"How much data could we lose worst case?"},{s:"You", t:"Our |RPO| is 4 hours — based on backup schedule."},{s:"Manager", t:"For finance too much."},{s:"You", t:"Right, switching their database to 15-minute log backups."}]},
+  {c:"BACKUP", emoji:"💾", t:"iSCSI target", ipa:"/aɪ ˈskʌzi ˈtɑːrɡɪt/", m:"target iSCSI", e:"We're using TrueNAS as the iSCSI target for backups.", tip:"Storage block-level qua IP",
+    dialog:[{s:"Junior", t:"How does the VM see this storage?"},{s:"You", t:"TrueNAS exposes it as an |iSCSI target|."},{s:"Junior", t:"Like local disk?"},{s:"You", t:"Exactly — block-level access over network."}]},
+  {c:"BACKUP", emoji:"🔌", t:"storage connection issue", ipa:"/ˈstɔːrɪdʒ kəˈnekʃn ˈɪʃuː/", m:"lỗi kết nối storage", e:"The backup failed because of a storage connection issue.", tip:"Backup server không nối NAS",
+    dialog:[{s:"Manager", t:"Why did the backup fail again?"},{s:"You", t:"|Storage connection issue| — NAS dropped during job."},{s:"Manager", t:"Permanent fix?"},{s:"You", t:"Adding a redundant network path to the NAS."}]},
+  {c:"BACKUP", emoji:"📅", t:"backup retention", ipa:"/ˈbækʌp rɪˈtenʃn/", m:"thời gian giữ backup", e:"Let's review the backup retention policy.", tip:"Giữ backup bao nhiêu ngày",
+    dialog:[{s:"Auditor", t:"How long do you keep backups?"},{s:"You", t:"|Backup retention| is 30 days daily, 12 months monthly."},{s:"Auditor", t:"Compliance 7 years."},{s:"You", t:"Adding a long-term retention policy."}]},
+
+  {c:"SECURITY", emoji:"🛡️", t:"security hardening", ipa:"/sɪˈkjʊrəti ˈhɑːrdnɪŋ/", m:"tăng cường bảo mật", e:"I'll perform security hardening on the server this week.", tip:"Đóng lỗ hổng",
+    dialog:[{s:"Auditor", t:"This new server fails our security baseline."},{s:"You", t:"I'll perform |security hardening| based on CIS benchmark."},{s:"Auditor", t:"Timeline?"},{s:"You", t:"Done by tomorrow with full evidence."}]},
+  {c:"SECURITY", emoji:"🔍", t:"pentest finding", ipa:"/ˈpentest ˈfaɪndɪŋ/", m:"phát hiện pentest", e:"This pentest finding needs to be remediated soon.", tip:"Lỗ hổng từ pentest",
+    dialog:[{s:"Manager", t:"The pentest report came back. Bad?"},{s:"You", t:"3 critical |pentest findings| we need to fix."},{s:"Manager", t:"Priority?"},{s:"You", t:"Weak SSH cipher, exposed admin port, outdated TLS."}]},
+  {c:"SECURITY", emoji:"🔧", t:"remediation plan", ipa:"/rɪˌmiːdiˈeɪʃn plæn/", m:"kế hoạch khắc phục", e:"I'm preparing a remediation plan for the findings.", tip:"Kế hoạch fix lỗ hổng",
+    dialog:[{s:"Manager", t:"How will we address audit findings?"},{s:"You", t:"I've prepared a |remediation plan| covering all 12 issues."},{s:"Manager", t:"How long?"},{s:"You", t:"30 days — critical first, low priority last."}]},
+  {c:"SECURITY", emoji:"🔓", t:"weak cipher", ipa:"/wiːk ˈsaɪfər/", m:"mã hóa yếu", e:"The scan detected some weak SSH ciphers that we need to disable.", tip:"Mã hóa cũ dễ bẻ",
+    dialog:[{s:"Auditor", t:"Your SSH config has weak ciphers enabled."},{s:"You", t:"I'll disable |weak ciphers| like 3DES and RC4."},{s:"Auditor", t:"Keep?"},{s:"You", t:"AES-256 and ChaCha20 only."}]},
+  {c:"SECURITY", emoji:"⚠️", t:"insecure protocol", ipa:"/ˌɪnsɪˈkjʊr ˈproʊtəkɒl/", m:"giao thức không an toàn", e:"TLS 1.0 and 1.1 are insecure protocols, so we'll turn them off.", tip:"Phải tắt",
+    dialog:[{s:"Auditor", t:"You still allow TLS 1.0?"},{s:"You", t:"It's an |insecure protocol|. Disabling on all servers."},{s:"Auditor", t:"Legacy clients?"},{s:"You", t:"Two old printers. Replacing next quarter."}]},
+  {c:"SECURITY", emoji:"✍️", t:"SMB signing", ipa:"/es em biː ˈsaɪnɪŋ/", m:"SMB signing", e:"Enabling SMB signing might affect some legacy systems.", tip:"Ký số gói SMB",
+    dialog:[{s:"Auditor", t:"SMB signing is not enforced."},{s:"You", t:"Enabling |SMB signing| enforcement on file server."},{s:"Auditor", t:"Impact?"},{s:"You", t:"Slight performance hit. Old XP clients won't connect — none in use."}]},
+  {c:"SECURITY", emoji:"🔐", t:"SSH hardening", ipa:"/es es eɪtʃ ˈhɑːrdnɪŋ/", m:"hardening SSH", e:"I'll apply SSH hardening to close this finding.", tip:"Tắt root login",
+    dialog:[{s:"Manager", t:"What's involved in SSH hardening?"},{s:"You", t:"|SSH hardening| means disabling root login and password auth."},{s:"Manager", t:"Admins?"},{s:"You", t:"SSH key only, plus jump host with MFA."}]},
+  {c:"SECURITY", emoji:"📸", t:"evidence screenshot", ipa:"/ˈevɪdəns ˈskriːnʃɒt/", m:"ảnh bằng chứng", e:"I'll capture an evidence screenshot after the change.", tip:"Proof cho audit",
+    dialog:[{s:"Auditor", t:"How do you prove the fix is in place?"},{s:"You", t:"|Evidence screenshots| before and after."},{s:"Auditor", t:"Plus scan report?"},{s:"You", t:"All attached to the remediation ticket."}]},
+  {c:"SECURITY", emoji:"🔄", t:"rescan request", ipa:"/riːˈskæn rɪˈkwest/", m:"yêu cầu scan lại", e:"I'll submit a rescan request once the remediation is done.", tip:"Confirm fix OK",
+    dialog:[{s:"Manager", t:"How do we close audit findings?"},{s:"You", t:"After fixing, I'll submit a |rescan request|."},{s:"Manager", t:"Results?"},{s:"You", t:"24-48 hours for rescan to complete."}]},
+  {c:"SECURITY", emoji:"📋", t:"risk acceptance", ipa:"/rɪsk əkˈseptəns/", m:"chấp nhận rủi ro", e:"If we can't fix it now, we may need a formal risk acceptance.", tip:"Ký giấy chấp nhận risk",
+    dialog:[{s:"Manager", t:"This finding can't be fixed for 6 months."},{s:"You", t:"We'll need a formal |risk acceptance|."},{s:"Manager", t:"Involve?"},{s:"You", t:"Document risk, mitigation, get C-level signoff."}]},
+
+  {c:"COMMS", emoji:"📞", t:"vendor escalation", ipa:"/ˈvendər ˌeskəˈleɪʃn/", m:"escalate vendor", e:"We're escalating this to the vendor because it's outside our control.", tip:"Đẩy lên hãng",
+    dialog:[{s:"Manager", t:"Why hasn't this firewall bug been fixed?"},{s:"You", t:"Beyond our scope — needs |vendor escalation|."},{s:"Manager", t:"Open ticket?"},{s:"You", t:"Done. Severity 1, ETA 4 hours from Fortinet."}]},
+  {c:"COMMS", emoji:"📝", t:"ticket update", ipa:"/ˈtɪkɪt ˈʌpdeɪt/", m:"cập nhật ticket", e:"I'll send a ticket update once I've finished investigating.", tip:"Update tiến độ",
+    dialog:[{s:"User", t:"What's happening with my support request?"},{s:"You", t:"I'll send a |ticket update| within the hour."},{s:"User", t:"Progress?"},{s:"You", t:"Root cause identified. Working on the fix."}]},
+  {c:"COMMS", emoji:"📊", t:"management summary", ipa:"/ˈmænɪdʒmənt ˈsʌməri/", m:"tóm tắt quản lý", e:"I'll prepare a management summary without the technical details.", tip:"Cho sếp đọc",
+    dialog:[{s:"Manager", t:"CEO is asking about yesterday's outage."},{s:"You", t:"I'll prepare a |management summary| — non-technical."},{s:"Manager", t:"Length?"},{s:"You", t:"One page: cause, impact, fix, prevention."}]},
+  {c:"COMMS", emoji:"💼", t:"business impact summary", ipa:"/ˈbɪznəs ˈɪmpækt ˈsʌməri/", m:"tóm tắt ảnh hưởng", e:"Let me put together a business impact summary for leadership.", tip:"Ảnh hưởng business",
+    dialog:[{s:"Manager", t:"How bad was the outage in business terms?"},{s:"You", t:"|Business impact summary|: 200 users, 90 minutes, no data loss."},{s:"Manager", t:"Revenue?"},{s:"You", t:"Estimated 50K USD — stalled transactions."}]},
+  {c:"COMMS", emoji:"🌳", t:"root cause analysis", ipa:"/ruːt kɔːz əˈnæləsɪs/", m:"phân tích nguyên nhân", e:"I'll provide a root cause analysis after the incident is resolved.", tip:"Đào tới gốc rễ",
+    dialog:[{s:"Manager", t:"Why did this happen?"},{s:"You", t:"Doing |root cause analysis|. Initial finding: expired certificate."},{s:"Manager", t:"Prevent?"},{s:"You", t:"Yes, adding cert expiry monitoring now."}]},
+  {c:"COMMS", emoji:"🩹", t:"workaround", ipa:"/ˈwɜːrkəraʊnd/", m:"giải pháp tạm thời", e:"We've applied a workaround until the permanent fix is ready.", tip:"Vá tạm",
+    dialog:[{s:"User", t:"Is the issue permanently fixed?"},{s:"You", t:"Not yet. We applied a |workaround|."},{s:"User", t:"Difference?"},{s:"You", t:"Works now, but vendor patch needed for permanent fix."}]},
+  {c:"COMMS", emoji:"🪟", t:"maintenance window", ipa:"/ˈmeɪntənəns ˈwɪndoʊ/", m:"cửa sổ bảo trì", e:"We'll make this change during the next maintenance window.", tip:"Giờ được phép xuống service",
+    dialog:[{s:"Manager", t:"When are we patching the database?"},{s:"You", t:"Saturday's |maintenance window| — 11 PM to 3 AM."},{s:"Manager", t:"Notify users?"},{s:"You", t:"Email 72 hours in advance."}]},
+  {c:"COMMS", emoji:"⏪", t:"rollback plan", ipa:"/ˈroʊlbæk plæn/", m:"kế hoạch quay lùi", e:"I'll prepare a rollback plan before we start the change.", tip:"Plan B",
+    dialog:[{s:"Manager", t:"What if upgrade breaks things?"},{s:"You", t:"We have a |rollback plan|. Snapshot taken before changes."},{s:"Manager", t:"Time?"},{s:"You", t:"Under 10 minutes to previous state."}]},
+  {c:"COMMS", emoji:"📄", t:"change request", ipa:"/tʃeɪndʒ rɪˈkwest/", m:"yêu cầu thay đổi", e:"I'll submit a change request before we proceed.", tip:"CR = đơn xin thay đổi",
+    dialog:[{s:"Junior", t:"Can I update the firewall rules now?"},{s:"You", t:"Submit a |change request| first."},{s:"Junior", t:"Why so much process?"},{s:"You", t:"Audit, peer review, rollback planning. Standard procedure."}]},
+  {c:"COMMS", emoji:"📰", t:"incident report", ipa:"/ˈɪnsɪdənt rɪˈpɔːrt/", m:"báo cáo sự cố", e:"I'll send the incident report by the end of the day.", tip:"Báo cáo chính thức",
+    dialog:[{s:"Manager", t:"When will we have the full incident report?"},{s:"You", t:"|Incident report| by end of day."},{s:"Manager", t:"Include?"},{s:"You", t:"Timeline, root cause, impact, actions, prevention."}]},
+
+  {c:"INTERVIEW", emoji:"🚶", t:"walk me through your experience", ipa:"/wɔːk miː θruː jɔːr ɪkˈspɪəriəns/", m:"kể qua kinh nghiệm của bạn", e:"Sure — for the past five years I've worked as an IT system engineer on infrastructure and support.", tip:"Mở đầu gọn 2–3 câu, không kể lể dài dòng",
+    dialog:[{s:"Interviewer", t:"Can you walk me through your experience?"},{s:"You", t:"Sure. For the past five years I've worked as an IT system engineer, mainly on infrastructure, virtualization, and end-user support."},{s:"Interviewer", t:"What size environment?"},{s:"You", t:"Around 300 users, a VMware cluster, and a Windows Active Directory domain."}]},
+  {c:"INTERVIEW", emoji:"🔥", t:"tell me about a challenging incident", ipa:"/tel miː əˈbaʊt ə ˈtʃælɪndʒɪŋ ˈɪnsɪdənt/", m:"kể về một sự cố khó", e:"One time our mail server went down during business hours and I led the recovery.", tip:"Dùng STAR: Situation – Task – Action – Result",
+    dialog:[{s:"Interviewer", t:"Tell me about a challenging incident you handled."},{s:"You", t:"Our mail server went down during business hours. I traced it to an expired TLS certificate, renewed it, and restored service in about twenty minutes."},{s:"Interviewer", t:"How did you prevent a repeat?"},{s:"You", t:"I set up a monitoring alert for certificate expiry thirty days in advance."}]},
+  {c:"INTERVIEW", emoji:"💪", t:"my biggest strength", ipa:"/maɪ ˈbɪɡɪst streŋθ/", m:"điểm mạnh nhất của tôi", e:"My biggest strength is staying calm and methodical under pressure.", tip:"Nêu điểm mạnh + ví dụ ngắn chứng minh",
+    dialog:[{s:"Interviewer", t:"What's your biggest strength?"},{s:"You", t:"Staying calm under pressure. During outages I isolate the root cause step by step instead of panicking."},{s:"Interviewer", t:"Can you give an example?"},{s:"You", t:"During a cluster failure I kept the team focused and we restored service within the SLA."}]},
+  {c:"INTERVIEW", emoji:"📈", t:"area for improvement", ipa:"/ˈeəriə fɔːr ɪmˈpruːvmənt/", m:"điểm cần cải thiện", e:"One area I'm working on is delegating instead of trying to fix everything myself.", tip:"Chọn điểm thật + cách bạn đang khắc phục (đừng giả vờ)",
+    dialog:[{s:"Interviewer", t:"What's an area you'd like to improve?"},{s:"You", t:"I tend to take on too much myself. I'm learning to delegate and document so the team can share the load."},{s:"Interviewer", t:"How are you working on it?"},{s:"You", t:"I've started writing runbooks so junior staff can handle common issues."}]},
+  {c:"INTERVIEW", emoji:"🚪", t:"why are you leaving", ipa:"/waɪ ɑːr juː ˈliːvɪŋ/", m:"vì sao bạn rời công ty cũ", e:"I'm looking for a role with more room to grow technically.", tip:"Hướng tích cực — KHÔNG chê công ty cũ",
+    dialog:[{s:"Interviewer", t:"Why are you leaving your current job?"},{s:"You", t:"I've learned a lot there, but I'm looking for a role with more technical challenge and room to grow."},{s:"Interviewer", t:"What kind of growth?"},{s:"You", t:"More exposure to cloud and security projects, which your team works on."}]},
+  {c:"INTERVIEW", emoji:"💰", t:"salary expectation", ipa:"/ˈsæləri ˌekspekˈteɪʃn/", m:"mức lương mong muốn", e:"Based on my experience and the market, I'm looking at a range of around X.", tip:"Đưa khoảng (range) dựa trên market + kinh nghiệm",
+    dialog:[{s:"Interviewer", t:"What's your salary expectation?"},{s:"You", t:"Based on my experience and the current market, I'm looking at a range between X and Y. Is that in line with the budget for this role?"},{s:"Interviewer", t:"It's close. Is it flexible?"},{s:"You", t:"Yes, I'm open to discussing it depending on the full package."}]},
+  {c:"INTERVIEW", emoji:"🗣️", t:"explain it to a non-technical person", ipa:"/ɪkˈspleɪn ɪt tə ə ˌnɒnˈteknɪkl ˈpɜːsn/", m:"giải thích cho người không rành kỹ thuật", e:"In simple terms, the system that handles our email stopped responding for a few minutes.", tip:"Bỏ jargon, dùng ví dụ đời thường",
+    dialog:[{s:"Interviewer", t:"How would you explain a server outage to a non-technical manager?"},{s:"You", t:"I'd say: the system that sends our email stopped working for about ten minutes, no data was lost, and it's fixed now."},{s:"Interviewer", t:"Why keep it that simple?"},{s:"You", t:"So they can make business decisions without needing the technical detail."}]},
+  {c:"INTERVIEW", emoji:"🔭", t:"where do you see yourself", ipa:"/weər duː juː siː jɔːrˈself/", m:"5 năm tới bạn ở đâu", e:"In a few years I'd like to grow into a senior or lead engineer role.", tip:"Gắn mục tiêu với vị trí đang ứng tuyển",
+    dialog:[{s:"Interviewer", t:"Where do you see yourself in five years?"},{s:"You", t:"I'd like to grow into a senior systems engineer, owning larger infrastructure projects."},{s:"Interviewer", t:"Any interest in management?"},{s:"You", t:"Possibly later, but first I want to deepen my technical expertise."}]},
+  {c:"INTERVIEW", emoji:"❓", t:"do you have any questions", ipa:"/duː juː hæv ˈeni ˈkwestʃənz/", m:"bạn có câu hỏi nào không", e:"Yes — what are the biggest challenges this team is facing right now?", tip:"LUÔN có 1–2 câu hỏi thông minh, đừng nói 'không'",
+    dialog:[{s:"Interviewer", t:"Do you have any questions for us?"},{s:"You", t:"Yes. What are the biggest challenges the team is facing right now?"},{s:"Interviewer", t:"Mostly scaling our infrastructure. Anything else?"},{s:"You", t:"How do you measure success in the first six months for this role?"}]},
+  {c:"INTERVIEW", emoji:"🧩", t:"how do you troubleshoot", ipa:"/haʊ duː juː ˈtrʌblʃuːt/", m:"cách bạn xử lý sự cố", e:"I start by reproducing the issue and checking what changed recently.", tip:"Cho thấy quy trình logic, từng bước một",
+    dialog:[{s:"Interviewer", t:"Walk me through how you troubleshoot a problem."},{s:"You", t:"First I reproduce the issue, then I check recent changes, isolate the layer — network, server, or application — and test one thing at a time."},{s:"Interviewer", t:"And if you're stuck?"},{s:"You", t:"I check the logs, search the vendor's knowledge base, and escalate if it's outside my control."}]},
+  {c:"INTERVIEW", emoji:"⏱️", t:"working under pressure", ipa:"/ˈwɜːkɪŋ ˈʌndər ˈpreʃər/", m:"làm việc dưới áp lực", e:"I handle pressure by prioritizing the highest-impact issue and communicating clearly.", tip:"Kèm một ví dụ outage thật",
+    dialog:[{s:"Interviewer", t:"How do you handle working under pressure?"},{s:"You", t:"I prioritize the highest-impact issue first and keep stakeholders updated so nobody is left guessing."},{s:"Interviewer", t:"An example?"},{s:"You", t:"During a major outage I assigned tasks, gave updates every fifteen minutes, and we met the recovery target."}]},
+  {c:"INTERVIEW", emoji:"🎯", t:"why do you want this role", ipa:"/waɪ duː juː wɒnt ðɪs roʊl/", m:"vì sao muốn vị trí này", e:"This role matches my strengths and the direction I want to grow in.", tip:"Nối kỹ năng của bạn với nhu cầu của họ",
+    dialog:[{s:"Interviewer", t:"Why do you want this role?"},{s:"You", t:"It combines the infrastructure work I'm strong at with the cloud and security projects I want to grow into."},{s:"Interviewer", t:"Why our company specifically?"},{s:"You", t:"Your team has a strong engineering culture and a clear career path."}]},
+  {c:"INTERVIEW", emoji:"🤔", t:"could you clarify the question", ipa:"/kʊd juː ˈklærɪfaɪ ðə ˈkwestʃən/", m:"nhờ làm rõ câu hỏi", e:"Could you clarify what you mean by that, so I can give you a precise answer?", tip:"Chưa rõ thì hỏi lại lịch sự — đừng đoán bừa",
+    dialog:[{s:"Interviewer", t:"How would you scale this system?"},{s:"You", t:"Could you clarify — do you mean scaling for more users, or for higher availability?"},{s:"Interviewer", t:"For more users."},{s:"You", t:"Then I'd add nodes to the cluster and load-balance across them."}]},
+];
+
+// ============================================================
+// IPA DATA — FULL 44 ENGLISH SOUNDS (24 consonants + 20 vowels)
+// ============================================================
+const ipaData = {
+  consonants: [
+    // PLOSIVES (6)
+    {s:"/p/", n:"P", type:"Voiceless bilabial plosive", hard:false, vnTip:"Giống 'p' tiếng Việt nhưng có bật hơi mạnh đầu từ", ex:[{w:"patch",i:"/pætʃ/"},{w:"port",i:"/pɔːrt/"},{w:"package",i:"/ˈpækɪdʒ/"}], sent:"Apply the |patch| on |port| 22 in this |package|."},
+    {s:"/b/", n:"B", type:"Voiced bilabial plosive", hard:false, vnTip:"Giống 'b' tiếng Việt", ex:[{w:"backup",i:"/ˈbækʌp/"},{w:"bandwidth",i:"/ˈbændwɪdθ/"},{w:"bridge",i:"/brɪdʒ/"}], sent:"The |backup| job uses high |bandwidth| through this |bridge|."},
+    {s:"/t/", n:"T", type:"Voiceless alveolar plosive", hard:false, vnTip:"Bật hơi mạnh đầu từ. KHÔNG bỏ /t/ cuối từ", ex:[{w:"ticket",i:"/ˈtɪkɪt/"},{w:"target",i:"/ˈtɑːrɡɪt/"},{w:"reset",i:"/riːˈset/"}], sent:"Open a |ticket| for the |target| server and |reset| it."},
+    {s:"/d/", n:"D", type:"Voiced alveolar plosive", hard:false, vnTip:"Giống 'đ' tiếng Việt", ex:[{w:"data",i:"/ˈdeɪtə/"},{w:"domain",i:"/dəˈmeɪn/"},{w:"deployed",i:"/dɪˈplɔɪd/"}], sent:"The |data| on this |domain| was just |deployed|."},
+    {s:"/k/", n:"K", type:"Voiceless velar plosive", hard:false, vnTip:"Giống 'c/k' tiếng Việt. KHÔNG bỏ /k/ cuối từ", ex:[{w:"check",i:"/tʃek/"},{w:"backup",i:"/ˈbækʌp/"},{w:"network",i:"/ˈnetwɜːrk/"}], sent:"|Check| the |backup| status of the |network|."},
+    {s:"/ɡ/", n:"G", type:"Voiced velar plosive", hard:false, vnTip:"Giống 'g' trong 'good' — không phải 'gi' tiếng Việt", ex:[{w:"gateway",i:"/ˈɡeɪtweɪ/"},{w:"log",i:"/lɒɡ/"},{w:"group",i:"/ɡruːp/"}], sent:"Check the |gateway| |log| for this |group|."},
+
+    // FRICATIVES (9)
+    {s:"/f/", n:"F", type:"Voiceless labiodental fricative", hard:false, vnTip:"Răng trên chạm môi dưới, thổi hơi", ex:[{w:"firewall",i:"/ˈfaɪərwɔːl/"},{w:"file",i:"/faɪl/"},{w:"forward",i:"/ˈfɔːrwərd/"}], sent:"The |firewall| blocked this |file| from |forward| traffic."},
+    {s:"/v/", n:"V", type:"Voiced labiodental fricative", hard:true, vnTip:"Người Việt hay đọc thành 'v' nhẹ. Phải cắn nhẹ MÔI DƯỚI, có rung dây thanh", ex:[{w:"VPN",i:"/viː piː en/"},{w:"server",i:"/ˈsɜːrvər/"},{w:"virtual",i:"/ˈvɜːrtʃuəl/"}], sent:"Connect to the |virtual| |server| through the |VPN|."},
+    {s:"/θ/", n:"TH (voiceless)", type:"Voiceless dental fricative", hard:true, vnTip:"KHÔNG có trong tiếng Việt. Đưa LƯỠI giữa 2 hàm răng, thổi hơi không rung", ex:[{w:"throughput",i:"/ˈθruːpʊt/"},{w:"threshold",i:"/ˈθreʃhoʊld/"},{w:"third",i:"/θɜːrd/"}], sent:"Monitor the |throughput| and check the alert |threshold|."},
+    {s:"/ð/", n:"TH (voiced)", type:"Voiced dental fricative", hard:true, vnTip:"Giống /θ/ nhưng CÓ rung dây thanh. Người Việt hay đọc thành 'd'", ex:[{w:"this",i:"/ðɪs/"},{w:"that",i:"/ðæt/"},{w:"bandwidth",i:"/ˈbændwɪdθ/"}], sent:"|This| is |the| firewall rule |that| blocks traffic."},
+    {s:"/s/", n:"S", type:"Voiceless alveolar fricative", hard:false, vnTip:"Giống 's' tiếng Việt", ex:[{w:"server",i:"/ˈsɜːrvər/"},{w:"system",i:"/ˈsɪstəm/"},{w:"service",i:"/ˈsɜːrvɪs/"}], sent:"The |server| |system| restarted the |service|."},
+    {s:"/z/", n:"Z", type:"Voiced alveolar fricative", hard:true, vnTip:"Giống 's' nhưng có rung. Người Việt hay đọc thành 's'. Cuối từ -s đôi khi đọc thành /z/", ex:[{w:"logs",i:"/lɒɡz/"},{w:"users",i:"/ˈjuːzərz/"},{w:"zones",i:"/zoʊnz/"}], sent:"Check the |logs| for these |users| in different |zones|."},
+    {s:"/ʃ/", n:"SH", type:"Voiceless postalveolar fricative", hard:true, vnTip:"Tròn môi, lưỡi nâng cao. Người Việt hay đọc thành 's' hoặc 'x'", ex:[{w:"shell",i:"/ʃel/"},{w:"machine",i:"/məˈʃiːn/"},{w:"session",i:"/ˈseʃn/"}], sent:"Open a |shell| on the |machine| to check the |session|."},
+    {s:"/ʒ/", n:"ZH", type:"Voiced postalveolar fricative", hard:true, vnTip:"Hiếm gặp. Giống /ʃ/ nhưng có rung. Như 'j' tiếng Pháp", ex:[{w:"measure",i:"/ˈmeʒər/"},{w:"version",i:"/ˈvɜːrʒn/"},{w:"casual",i:"/ˈkæʒuəl/"}], sent:"|Measure| the new |version| in a |casual| test."},
+    {s:"/h/", n:"H", type:"Voiceless glottal fricative", hard:false, vnTip:"Giống 'h' tiếng Việt", ex:[{w:"host",i:"/hoʊst/"},{w:"hardware",i:"/ˈhɑːrdwer/"},{w:"hash",i:"/hæʃ/"}], sent:"Verify the |host| |hardware| and the file |hash|."},
+
+    // AFFRICATES (2)
+    {s:"/tʃ/", n:"CH", type:"Voiceless postalveolar affricate", hard:true, vnTip:"Người Việt hay đọc thành 'ch' mềm. Tiếng Anh /tʃ/ MẠNH và bật hơn — T + SH", ex:[{w:"check",i:"/tʃek/"},{w:"switch",i:"/swɪtʃ/"},{w:"patch",i:"/pætʃ/"}], sent:"|Check| the |switch| config and apply the |patch|."},
+    {s:"/dʒ/", n:"J/DGE", type:"Voiced postalveolar affricate", hard:true, vnTip:"Người Việt hay đọc nhẹ. Phải bật mạnh — D + ZH", ex:[{w:"job",i:"/dʒɒb/"},{w:"manage",i:"/ˈmænɪdʒ/"},{w:"bridge",i:"/brɪdʒ/"}], sent:"We need to |manage| the backup |job| and configure the |bridge|."},
+
+    // NASALS (3)
+    {s:"/m/", n:"M", type:"Bilabial nasal", hard:false, vnTip:"Giống 'm' tiếng Việt", ex:[{w:"monitor",i:"/ˈmɒnɪtər/"},{w:"mail",i:"/meɪl/"},{w:"memory",i:"/ˈmeməri/"}], sent:"|Monitor| the |mail| server's |memory| usage."},
+    {s:"/n/", n:"N", type:"Alveolar nasal", hard:false, vnTip:"Giống 'n' tiếng Việt", ex:[{w:"network",i:"/ˈnetwɜːrk/"},{w:"node",i:"/noʊd/"},{w:"NAT",i:"/næt/"}], sent:"The |network| |node| needs |NAT| configuration."},
+    {s:"/ŋ/", n:"NG", type:"Velar nasal", hard:true, vnTip:"Như 'ng' tiếng Việt nhưng KHÔNG bao giờ đứng đầu từ. Đuôi -ing rất phổ biến", ex:[{w:"ping",i:"/pɪŋ/"},{w:"running",i:"/ˈrʌnɪŋ/"},{w:"logging",i:"/ˈlɒɡɪŋ/"}], sent:"|Ping| the server while it's |running| with |logging| enabled."},
+
+    // LIQUIDS (2)
+    {s:"/l/", n:"L", type:"Alveolar lateral", hard:true, vnTip:"Đầu từ dễ. Cuối từ ('dark L') khó — phải nâng cuống lưỡi về sau", ex:[{w:"log",i:"/lɒɡ/"},{w:"firewall",i:"/ˈfaɪərwɔːl/"},{w:"protocol",i:"/ˈproʊtəkɒl/"}], sent:"Check the |log| file on the |firewall| for that |protocol|."},
+    {s:"/r/", n:"R", type:"Alveolar approximant", hard:true, vnTip:"KHÔNG rung lưỡi như tiếng Việt. Cong đầu lưỡi lên, không chạm", ex:[{w:"router",i:"/ˈruːtər/"},{w:"restore",i:"/rɪˈstɔːr/"},{w:"firewall",i:"/ˈfaɪərwɔːl/"}], sent:"The |router| is behind the |firewall| — need to |restore| config."},
+
+    // GLIDES (2)
+    {s:"/j/", n:"Y", type:"Palatal approximant", hard:false, vnTip:"Như 'y' trong 'yes'. KHÔNG phải 'j' tiếng Việt", ex:[{w:"yes",i:"/jes/"},{w:"user",i:"/ˈjuːzər/"},{w:"yet",i:"/jet/"}], sent:"|Yes|, the |user| account is not active |yet|."},
+    {s:"/w/", n:"W", type:"Labio-velar approximant", hard:false, vnTip:"Tròn môi như 'qu' nhưng không có 'k'", ex:[{w:"web",i:"/web/"},{w:"workaround",i:"/ˈwɜːrkəraʊnd/"},{w:"window",i:"/ˈwɪndoʊ/"}], sent:"The |web| server has a |workaround| in the maintenance |window|."},
+  ],
+  vowels: [
+    // SHORT VOWELS (7)
+    {s:"/ɪ/", n:"I (short)", type:"Near-close near-front", hard:true, vnTip:"NGẮN. Người Việt hay kéo dài thành /iː/. Môi không cười rộng", ex:[{w:"bit",i:"/bɪt/"},{w:"switch",i:"/swɪtʃ/"},{w:"system",i:"/ˈsɪstəm/"}], sent:"The |switch| has a faulty |bit| in the |system|."},
+    {s:"/e/", n:"E (short)", type:"Open-mid front", hard:false, vnTip:"Giống 'e' tiếng Việt", ex:[{w:"check",i:"/tʃek/"},{w:"server",i:"/ˈsɜːrvər/"},{w:"network",i:"/ˈnetwɜːrk/"}], sent:"|Check| the |server| in the |network|."},
+    {s:"/æ/", n:"A (short)", type:"Near-open front", hard:true, vnTip:"KHÔNG có trong tiếng Việt. Mở miệng RỘNG, hàm hạ xuống. Giữa 'a' và 'e'", ex:[{w:"patch",i:"/pætʃ/"},{w:"traffic",i:"/ˈtræfɪk/"},{w:"access",i:"/ˈækses/"}], sent:"Apply the |patch| to allow |access| and reduce |traffic|."},
+    {s:"/ʌ/", n:"U (short)", type:"Open-mid back unrounded", hard:true, vnTip:"Giống 'ă' tiếng Việt. Người Việt hay nhầm với /ʊ/", ex:[{w:"backup",i:"/ˈbækʌp/"},{w:"public",i:"/ˈpʌblɪk/"},{w:"running",i:"/ˈrʌnɪŋ/"}], sent:"The |backup| of the |public| folder is |running|."},
+    {s:"/ʊ/", n:"OO (short)", type:"Near-close near-back rounded", hard:true, vnTip:"NGẮN. Tròn môi nhẹ", ex:[{w:"put",i:"/pʊt/"},{w:"good",i:"/ɡʊd/"},{w:"book",i:"/bʊk/"}], sent:"|Put| the |good| copy in this |book|."},
+    {s:"/ɒ/", n:"O (short, UK)", type:"Open back rounded", hard:false, vnTip:"Như 'o' trong 'log'. (US dùng /ɑː/)", ex:[{w:"log",i:"/lɒɡ/"},{w:"job",i:"/dʒɒb/"},{w:"protocol",i:"/ˈproʊtəkɒl/"}], sent:"The backup |job| writes a |log| through this |protocol|."},
+    {s:"/ə/", n:"Schwa", type:"Mid-central (weak)", hard:true, vnTip:"Âm YẾU nhất tiếng Anh. Xuất hiện ở âm tiết không stress. Người Việt hay đọc rõ", ex:[{w:"about",i:"/əˈbaʊt/"},{w:"system",i:"/ˈsɪstəm/"},{w:"banner",i:"/ˈbænər/"}], sent:"I'll tell you |about| the new |system| |banner|."},
+
+    // LONG VOWELS (5)
+    {s:"/iː/", n:"EE (long)", type:"Close front", hard:true, vnTip:"KÉO DÀI. Môi kéo rộng cười. Khác /ɪ/ ngắn", ex:[{w:"machine",i:"/məˈʃiːn/"},{w:"key",i:"/kiː/"},{w:"queue",i:"/kjuː/"}], sent:"The |machine| processing the |queue| needs a |key|."},
+    {s:"/ɑː/", n:"AH (long)", type:"Open back", hard:false, vnTip:"Như 'a' kéo dài. Mở miệng to", ex:[{w:"server",i:"/ˈsɜːrvər/"},{w:"hardware",i:"/ˈhɑːrdwer/"},{w:"target",i:"/ˈtɑːrɡɪt/"}], sent:"The |server| |hardware| reached the |target| performance."},
+    {s:"/ɔː/", n:"AW (long)", type:"Open-mid back rounded", hard:true, vnTip:"Tròn môi, kéo dài. Giữa 'o' và 'a'", ex:[{w:"port",i:"/pɔːrt/"},{w:"forward",i:"/ˈfɔːrwərd/"},{w:"firewall",i:"/ˈfaɪərwɔːl/"}], sent:"|Forward| |port| 443 through the |firewall|."},
+    {s:"/uː/", n:"OO (long)", type:"Close back rounded", hard:false, vnTip:"KÉO DÀI. Tròn môi mạnh", ex:[{w:"root",i:"/ruːt/"},{w:"queue",i:"/kjuː/"},{w:"reboot",i:"/riːˈbuːt/"}], sent:"Log in as |root| to clear the |queue| and |reboot|."},
+    {s:"/ɜːr/", n:"ER (long)", type:"Open-mid central, r-colored", hard:true, vnTip:"KÉO DÀI và cong lưỡi. Người Việt hay đọc ngắn thành 'ơ'", ex:[{w:"server",i:"/ˈsɜːrvər/"},{w:"firewall",i:"/ˈfaɪərwɔːl/"},{w:"alert",i:"/əˈlɜːrt/"}], sent:"The |server| sent an |alert| through the |firewall|."},
+
+    // DIPHTHONGS (8)
+    {s:"/eɪ/", n:"AY", type:"Diphthong", hard:false, vnTip:"Từ 'e' chuyển sang 'i'. Như 'ây' tiếng Việt", ex:[{w:"data",i:"/ˈdeɪtə/"},{w:"name",i:"/neɪm/"},{w:"gateway",i:"/ˈɡeɪtweɪ/"}], sent:"Check the |name| and |data| at the |gateway|."},
+    {s:"/aɪ/", n:"IGH", type:"Diphthong", hard:false, vnTip:"Như 'ai' tiếng Việt", ex:[{w:"firewall",i:"/ˈfaɪərwɔːl/"},{w:"client",i:"/ˈklaɪənt/"},{w:"site",i:"/saɪt/"}], sent:"The |client| at the remote |site| reached our |firewall|."},
+    {s:"/ɔɪ/", n:"OY", type:"Diphthong", hard:false, vnTip:"Như 'oi' tiếng Việt", ex:[{w:"deploy",i:"/dɪˈplɔɪ/"},{w:"point",i:"/pɔɪnt/"},{w:"avoid",i:"/əˈvɔɪd/"}], sent:"|Deploy| the restore |point| to |avoid| data loss."},
+    {s:"/aʊ/", n:"OW", type:"Diphthong", hard:false, vnTip:"Như 'au' tiếng Việt", ex:[{w:"down",i:"/daʊn/"},{w:"outbound",i:"/ˈaʊtbaʊnd/"},{w:"router",i:"/ˈraʊtər/"}], sent:"The |router| is |down| — no |outbound| traffic."},
+    {s:"/oʊ/", n:"OH (US)", type:"Diphthong", hard:false, vnTip:"Giống 'ô' tiếng Việt nhưng dài hơn", ex:[{w:"hold",i:"/hoʊld/"},{w:"protocol",i:"/ˈproʊtəkɒl/"},{w:"local",i:"/ˈloʊkl/"}], sent:"|Hold| this |protocol| on the |local| network."},
+    {s:"/ɪər/", n:"EAR (UK)", type:"Centering diphthong", hard:false, vnTip:"'I' chuyển sang 'ơ'. US thường thành /ɪr/", ex:[{w:"clear",i:"/klɪər/"},{w:"here",i:"/hɪər/"},{w:"near",i:"/nɪər/"}], sent:"|Clear| the alert that came up |here| |near| midnight."},
+    {s:"/eər/", n:"AIR (UK)", type:"Centering diphthong", hard:false, vnTip:"'E' chuyển sang 'ơ'. US thường thành /er/", ex:[{w:"share",i:"/ʃeər/"},{w:"care",i:"/keər/"},{w:"prepare",i:"/prɪˈpeər/"}], sent:"|Prepare| to |share| the report — please take |care|."},
+    {s:"/ʊər/", n:"URE (UK)", type:"Centering diphthong", hard:true, vnTip:"'U' chuyển sang 'ơ'. Hiếm gặp", ex:[{w:"sure",i:"/ʃʊər/"},{w:"secure",i:"/sɪˈkjʊər/"},{w:"pure",i:"/pjʊər/"}], sent:"I'm |sure| the |secure| connection is |pure| TLS 1.3."},
+  ]
+};
+
+// ============================================================
+// FLASHCARD STATE & LOGIC
+// ============================================================
+const CATEGORIES = ["All", "Due Today", "EMAIL", "VM", "SAMBA", "FIREWALL", "MONITOR", "BACKUP", "SECURITY", "COMMS", "INTERVIEW"];
+const STORAGE_KEY = "it_flashcards_master_v1";
+const INTERVALS = { again: 0.0007, hard: 1, good: 3, easy: 7 };
+
+let currentIndex = 0;
+let currentFilter = "All";
+let progress = {};
+let filteredCards = cards;
+let currentIpaTab = "overview";
+let currentMode = "flashcards";
+let productionMode = false;
+
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) progress = JSON.parse(saved);
+  } catch (e) { progress = {}; }
+}
+function saveProgress() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch (e) {}
+}
+function getCardSrs(term) {
+  if (!progress[term]) return { level: 0, nextDue: 0, status: "new" };
+  return progress[term];
+}
+function isDue(term) {
+  const srs = getCardSrs(term);
+  if (srs.status === "new") return true;
+  return Date.now() >= srs.nextDue;
+}
+function getDueCount() { return cards.filter(c => isDue(c.t)).length; }
+function getStats() {
+  let mastered = 0, review = 0;
+  cards.forEach(c => {
+    const srs = getCardSrs(c.t);
+    if (srs.level >= 3) mastered++;
+    else if (srs.level > 0) review++;
+  });
+  return { mastered, review };
+}
+
+function buildControls() {
+  const controls = document.getElementById("controls");
+  controls.innerHTML = "";
+  CATEGORIES.forEach(cat => {
+    const chip = document.createElement("div");
+    chip.className = "chip" + (cat === currentFilter ? " active" : "");
+    chip.textContent = cat;
+    chip.onclick = () => {
+      currentFilter = cat; currentIndex = 0;
+      applyFilter(); buildControls(); renderCard();
+    };
+    controls.appendChild(chip);
+  });
+}
+function applyFilter() {
+  if (currentFilter === "All") filteredCards = cards;
+  else if (currentFilter === "Due Today") {
+    filteredCards = cards.filter(c => isDue(c.t));
+    if (filteredCards.length === 0) filteredCards = cards;
+  } else filteredCards = cards.filter(c => c.c === currentFilter);
+  document.getElementById("modeText").textContent = currentFilter;
+}
+function renderDialog(dialogArr) {
+  const box = document.getElementById("dialogBox");
+  box.innerHTML = "";
+  dialogArr.forEach(line => {
+    const div = document.createElement("div");
+    div.className = "dialog-line";
+    const speakerEl = document.createElement("div");
+    speakerEl.className = "speaker" + (line.s === "You" ? " you" : "");
+    speakerEl.textContent = line.s + ":";
+    const textEl = document.createElement("div");
+    textEl.className = "dialog-text";
+    textEl.innerHTML = line.t.replace(/\|([^|]+)\|/g, '<span class="highlight">$1</span>');
+    div.appendChild(speakerEl); div.appendChild(textEl);
+    box.appendChild(div);
+  });
+}
+function getSrsBadge(term) {
+  const srs = getCardSrs(term);
+  if (srs.status === "new") return "📚 New";
+  if (srs.level === 1) return "🌱 Learning";
+  if (srs.level === 2) return "🔄 Review";
+  if (srs.level >= 3) return "⭐ Mastered";
+  return "📚 New";
+}
+function renderCard() {
+  if (filteredCards.length === 0) return;
+  if (currentIndex >= filteredCards.length) currentIndex = 0;
+  if (currentIndex < 0) currentIndex = filteredCards.length - 1;
+  const card = filteredCards[currentIndex];
+  const cardEl = document.getElementById("card");
+  cardEl.classList.remove("flipped", "swipe-left", "swipe-right");
+  document.getElementById("catFront").textContent = card.c;
+  document.getElementById("catBack").textContent = card.c;
+  document.getElementById("srsFront").textContent = getSrsBadge(card.t);
+  document.getElementById("numFront").textContent = `${currentIndex + 1} / ${filteredCards.length}`;
+  document.getElementById("numBack").textContent = `${currentIndex + 1} / ${filteredCards.length}`;
+  document.getElementById("emojiFront").textContent = card.emoji;
+  document.getElementById("emojiBack").textContent = card.emoji;
+  document.getElementById("termFront").textContent = card.t;
+  document.getElementById("ipaFront").textContent = card.ipa;
+  document.getElementById("meaningBack").textContent = card.m;
+  document.getElementById("memoryTip").textContent = card.tip;
+  renderDialog(card.dialog);
+  document.getElementById("exampleBack").textContent = card.e;
+  applyProductionFaces(card);
+  document.getElementById("progressText").textContent = `${currentIndex + 1} / ${filteredCards.length}`;
+  document.getElementById("progressFill").style.width = ((currentIndex + 1) / filteredCards.length * 100) + "%";
+  const emoji = document.getElementById("emojiFront");
+  emoji.style.animation = "none"; void emoji.offsetWidth;
+  emoji.style.animation = "bounce 0.6s ease-out";
+  updateStats();
+}
+function applyProductionFaces(card){
+  var prod = productionMode;
+  document.getElementById("termFront").textContent = prod ? card.m : card.t;
+  var ipaF = document.getElementById("ipaFront");
+  ipaF.textContent = card.ipa; ipaF.style.display = prod ? "none" : "";
+  document.getElementById("speakFrontBtn").style.display = prod ? "none" : "";
+  document.getElementById("frontHint").textContent = prod
+    ? "Nói/viết câu tiếng Anh — rồi tap để kiểm tra" : "Tap to see meaning";
+  var tb = document.getElementById("termBack"), ib = document.getElementById("ipaBack");
+  tb.textContent = card.t; ib.textContent = card.ipa;
+  tb.style.display = prod ? "" : "none";
+  ib.style.display = prod ? "" : "none";
+}
+function speakExample(){ var c = filteredCards[currentIndex]; if (c) speak(c.e); }
+function toggleProduction(){
+  productionMode = !productionMode;
+  var b = document.getElementById("prodToggle");
+  if (productionMode){
+    b.classList.add("prod-on");
+    b.textContent = "🔁 Chế độ: VN → EN (luyện nói) · bấm để về EN → VN (nhận diện)";
+  } else {
+    b.classList.remove("prod-on");
+    b.textContent = "🔁 Chế độ: EN → VN (nhận diện) · bấm để đổi sang VN → EN (luyện nói)";
+  }
+  document.getElementById("card").classList.remove("flipped");
+  renderCard();
+}
+function updateStats() {
+  const stats = getStats();
+  document.getElementById("knownCount").textContent = `✓ ${stats.mastered} mastered`;
+  document.getElementById("unknownCount").textContent = `↻ ${stats.review} review`;
+  document.getElementById("dueCount").textContent = `⏰ ${getDueCount()} due`;
+}
+function flip() { document.getElementById("card").classList.toggle("flipped"); }
+function nextCard(direction) {
+  const cardEl = document.getElementById("card");
+  cardEl.classList.add(direction === "left" ? "swipe-left" : "swipe-right");
+  setTimeout(() => {
+    currentIndex = (currentIndex + 1) % filteredCards.length;
+    renderCard();
+  }, 280);
+}
+function rateCard(rating) {
+  const card = filteredCards[currentIndex];
+  const srs = getCardSrs(card.t);
+  let newLevel = srs.level || 0;
+  let intervalDays;
+  if (rating === 1) { newLevel = 0; intervalDays = INTERVALS.again; }
+  else if (rating === 2) { newLevel = Math.max(1, newLevel); intervalDays = INTERVALS.hard; }
+  else if (rating === 3) { newLevel += 1; intervalDays = INTERVALS.good * Math.pow(2, Math.max(0, newLevel - 1)); }
+  else if (rating === 4) { newLevel += 2; intervalDays = INTERVALS.easy * Math.pow(2, Math.max(0, newLevel - 1)); }
+  progress[card.t] = {
+    level: newLevel,
+    nextDue: Date.now() + intervalDays * 24 * 60 * 60 * 1000,
+    status: newLevel >= 3 ? "mastered" : newLevel > 0 ? "learning" : "new",
+    lastRated: Date.now()
+  };
+  saveProgress();
+  nextCard(rating === 1 ? "left" : "right");
+}
+function speakTerm() { const c = filteredCards[currentIndex]; speak(c.t); }
+function speakDialog() {
+  const card = filteredCards[currentIndex];
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  card.dialog.forEach((line, i) => {
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(line.t.replace(/\|/g, ""));
+      u.lang = "en-US"; u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    }, i * 100);
+  });
+}
+function speak(text, rate = 0.85) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/\|/g, ""));
+  u.lang = "en-US"; u.rate = rate;
+  window.speechSynthesis.speak(u);
+}
+
+// Touch
+let tsX = 0, tsY = 0, teX = 0, teY = 0;
+const cardArea = document.getElementById("cardArea");
+cardArea.addEventListener("touchstart", e => { tsX = e.changedTouches[0].screenX; tsY = e.changedTouches[0].screenY; }, { passive: true });
+cardArea.addEventListener("touchend", e => {
+  teX = e.changedTouches[0].screenX; teY = e.changedTouches[0].screenY;
+  const dx = teX - tsX, dy = teY - tsY;
+  if (Math.abs(dx) < 50 && Math.abs(dy) < 50) { flip(); return; }
+  if (dx < -50 && Math.abs(dx) > Math.abs(dy)) {
+    currentIndex = (currentIndex + 1) % filteredCards.length;
+    renderCard();
+  } else if (dx > 50 && Math.abs(dx) > Math.abs(dy)) {
+    currentIndex = (currentIndex - 1 + filteredCards.length) % filteredCards.length;
+    renderCard();
+  }
+}, { passive: true });
+
+document.getElementById("card").addEventListener("click", e => {
+  if (e.target.closest(".speak-btn") || e.target.closest(".practice-btn")) return;
+  flip();
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("Reset all progress?")) { progress = {}; saveProgress(); updateStats(); renderCard(); }
+});
+
+// ============================================================
+// IPA CHART RENDERING
+// ============================================================
+function renderIpaCard(s) {
+  return `
+    <div class="ipa-card ${s.hard ? 'hard' : ''}">
+      <div class="ipa-card-header">
+        <div class="ipa-big-symbol" onclick="speakIpaExample('${s.ex[0].w}')">${s.s.replace(/\//g, "")}</div>
+        <div class="ipa-info">
+          <div class="ipa-type">${s.type}</div>
+          <div class="ipa-name">${s.n}</div>
+          ${s.hard ? '<div class="hard-badge">⚠️ HARD FOR VN</div>' : ''}
+        </div>
+      </div>
+      <div class="vn-tip-mini">💡 ${s.vnTip}</div>
+      <div class="section-label">📚 IT Examples · tap to hear</div>
+      <div class="ipa-examples">
+        ${s.ex.map(e => `
+          <div class="ipa-example-word" onclick="speakIpaExample('${e.w}')">
+            <div class="iew-word">${e.w}</div>
+            <div class="iew-ipa">${e.i}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="ipa-sentence" onclick="speakIpaSentence('${s.sent.replace(/'/g, "\\'")}')">
+        <div class="ipa-sentence-label">💬 IT Workplace Sentence · tap to hear</div>
+        ${s.sent.replace(/\|([^|]+)\|/g, '<span class="highlight">$1</span>')}
+      </div>
+    </div>
+  `;
+}
+
+function renderIpaOverview() {
+  const allSounds = [...ipaData.consonants, ...ipaData.vowels];
+  const grid = allSounds.map(s => `
+    <div class="ipa-grid-cell ${s.hard ? 'hard' : ''}" onclick="speakIpaExample('${s.ex[0].w}')">
+      <div class="ipa-grid-symbol">${s.s.replace(/\//g, "")}</div>
+      <div class="ipa-grid-example">${s.ex[0].w}</div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="ipa-section-header">
+      <div class="ipa-section-title">🗺️ Full IPA Chart — 44 sounds</div>
+      <div class="ipa-section-desc">
+        24 phụ âm + 20 nguyên âm. Tap vào ô để nghe ví dụ.
+        <br>Ô <b style="color:#f87171">đỏ</b> = âm khó với người Việt — cần luyện kỹ.
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot normal"></div> Easy / Normal</div>
+      <div class="legend-item"><div class="legend-dot hard-color"></div> Hard for Vietnamese</div>
+    </div>
+    <div class="ipa-section-header" style="margin-top:4px;">
+      <div class="ipa-section-title" style="font-size:13px;">🔊 Consonants (24)</div>
+    </div>
+    <div class="ipa-grid">
+      ${ipaData.consonants.map(s => `
+        <div class="ipa-grid-cell ${s.hard ? 'hard' : ''}" onclick="speakIpaExample('${s.ex[0].w}')">
+          <div class="ipa-grid-symbol">${s.s.replace(/\//g, "")}</div>
+          <div class="ipa-grid-example">${s.ex[0].w}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="ipa-section-header">
+      <div class="ipa-section-title" style="font-size:13px;">🎵 Vowels (20)</div>
+    </div>
+    <div class="ipa-grid">
+      ${ipaData.vowels.map(s => `
+        <div class="ipa-grid-cell ${s.hard ? 'hard' : ''}" onclick="speakIpaExample('${s.ex[0].w}')">
+          <div class="ipa-grid-symbol">${s.s.replace(/\//g, "")}</div>
+          <div class="ipa-grid-example">${s.ex[0].w}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderIpaList(list, title, desc) {
+  return `
+    <div class="ipa-section-header">
+      <div class="ipa-section-title">${title}</div>
+      <div class="ipa-section-desc">${desc}</div>
+    </div>
+    ${list.map(renderIpaCard).join('')}
+  `;
+}
+
+function renderIpaTab() {
+  const content = document.getElementById("ipaContent");
+  if (currentIpaTab === "overview") {
+    content.innerHTML = renderIpaOverview();
+  } else if (currentIpaTab === "consonants") {
+    content.innerHTML = renderIpaList(ipaData.consonants, "🔊 All Consonants (24)", "Phụ âm tiếng Anh đầy đủ — 6 plosives, 9 fricatives, 2 affricates, 3 nasals, 2 liquids, 2 glides");
+  } else if (currentIpaTab === "vowels") {
+    content.innerHTML = renderIpaList(ipaData.vowels, "🎵 All Vowels (20)", "Nguyên âm tiếng Anh đầy đủ — 7 short, 5 long, 8 diphthongs");
+  } else if (currentIpaTab === "hard") {
+    const allHard = [...ipaData.consonants, ...ipaData.vowels].filter(s => s.hard);
+    content.innerHTML = renderIpaList(allHard, "⚠️ Hard Sounds for Vietnamese", `${allHard.length} âm khó nhất với người Việt. Tập trung luyện kỹ những âm này — sẽ cải thiện rõ nhất.`);
+  }
+  window.scrollTo(0, 0);
+}
+
+function speakIpaExample(word) { speak(word, 0.8); }
+function speakIpaSentence(s) { speak(s, 0.85); }
+
+document.querySelectorAll(".ipa-tab").forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll(".ipa-tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    currentIpaTab = t.dataset.ipatab;
+    renderIpaTab();
+  };
+});
+
+// ============================================================
+// MODE SWITCHER
+// ============================================================
+function switchMode(mode) {
+  currentMode = mode;
+  const fc = document.getElementById("flashcardSection");
+  const ipa = document.getElementById("ipaSection");
+  const btnFc = document.getElementById("modeFlashcards");
+  const btnIpa = document.getElementById("modeIpa");
+
+  if (mode === "flashcards") {
+    fc.style.display = "";
+    ipa.style.display = "none";
+    btnFc.classList.add("active");
+    btnIpa.classList.remove("active");
+    document.body.classList.add("flashcard-mode");
+  } else {
+    fc.style.display = "none";
+    ipa.style.display = "";
+    btnFc.classList.remove("active");
+    btnIpa.classList.add("active");
+    document.body.classList.remove("flashcard-mode");
+    renderIpaTab();
+  }
+}
+
+document.getElementById("modeFlashcards").onclick = () => switchMode("flashcards");
+document.getElementById("modeIpa").onclick = () => switchMode("ipa");
+
+// INIT
+loadProgress();
+applyFilter();
+buildControls();
+renderCard();
+document.body.classList.add("flashcard-mode");
+
+// Show setup guide on first launch
+if (!localStorage.getItem('setupDone')) {
+  setTimeout(() => {
+    document.getElementById('setupModal').style.display = 'block';
+  }, 800);
+}
+</script>
+</body>
+</html>
